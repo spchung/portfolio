@@ -1,0 +1,21 @@
+---
+import BaseLayout from "layouts/BaseLayout.astro";
+
+export async function getStaticPaths(){
+    const resumes = await Astro.glob('../content/resume/*.md');
+    return resumes.map(resume =>({
+        params:{
+            resumeSlug: resume.frontmatter.resumeSlug
+        },
+        props: {
+            resume
+        }
+    }))
+}
+
+const { Content, frontmatter } = Astro.props.resume;
+---
+
+<BaseLayout>
+    <Content/>
+</BaseLayout>

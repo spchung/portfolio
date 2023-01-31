@@ -1,0 +1,28 @@
+---
+import logoTransparent from 'images/logo-no-background.svg';
+const latestResume = await Astro.glob('../content/resume/*md').then(r => r.reduce((latest, d) => (!d.frontmatter.isDraft && (new Date(d.frontmatter.pubDate) >= new Date(latest.frontmatter.pubDate))) ? d :latest, r[0]))
+---
+
+<header>
+    <div>
+        <nav>
+            <ul>
+                <li><a href='/'><img src={logoTransparent} alt="" /></a></li>
+            </ul>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href={`/${latestResume.frontmatter.resumeSlug}`}>Resume</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<style>
+    img {
+        max-height:100px;
+    }
+    nav { 
+        padding: 0 2em 0 2em;
+    }
+</style>

@@ -1,0 +1,62 @@
+---
+title: "Stephen Chung temp"
+pubDate: 2023-01-31
+resumeSlug: 'resume-20230129-temp'
+isDraft: true
+---
+#
+
+# **STEPHEN CHUNG**
+‍
+##
+
++(886) 988-300-319 |  chung25stephen@gmail.com| github.com/spchung | [linkedin.com/in/stephen-chung/](http://www.linkedin.com/in/stephen-chung/)
+
+EDUCATION
+
+University of California, Davis | Davis, CA
+
+_Economics B.A., Minor in Computer Science_ _ **Sept** __**2016 –**__ **June** __ **2020** _
+
+CERTIFICATION
+
+AWS Certified Solutions Architect Associate _ **Apr** __**2021 –**__ **April** __ **2024** _
+
+SKILLS
+
+- Languages/Runtimes: JavaScript, Python, C#, Golang
+- Frameworks: React.js, AngularJS, Charts.js, Express, Flask
+- Database: PostgreSQL, MSSQL, MongoDB, Neo4j
+- Cloud Computing Platform: AWS, Azure
+
+PROFESSIONAL EXPERIENCE
+
+**Software Engineer**
+
+**Trend Micro, Inc.** _September 2021 - Present | Taipei Taiwan_
+
+- Full stack development and maintenance of Trend's BPM system, which accounts for 10000+ monthly business process tickets, using C#, Python, and AngularJS
+
+- Design BPM's second-generation OCR system using AWS StepFunction and Azure Form Recognizer and accounts for more than 1000+ invoice scans across three Trend Micro operation regions
+- Introduce the use of Neo4j (graph database) to the BPM tech stack, replacing previously complex permission and approval routing system implemented in SQL with the more performant property graph data model
+- Charted the integration between BPM and Teams by implementing a MS Teams messaging system that improves upon the original email system with periodic jobs and dynamic message bodies
+- Spearheaded the development of BPM EU's credit card bill system, which consumes data directly from a Bank of America SFTP server and accounts for all the credit expenses for Europe's 21 business units
+
+**Backend Engineer**
+
+**SELLERLINX** _September 2020 – September 2021 | Taipei Taiwan_
+
+- Designedanddevelopedmultiple coresystemsthatwerecrucialtotheofficiallaunchofthe SELLERLINX platformandboostedactiveusercountto 100+
+
+- ChartedSELLERLINX'sShopeeBulkListingfeaturecapableofupdating/listing200+productsfromthecoresystemto auser'sShopeestoreusing AWSStep Function
+- HeadedthedevelopmentofSELLERLINX'sautomatedAPImonitorsystem,whichisadockerizedruntimethatruns postman test cases with Newman (Postman's CLI tool) every half-hour and displays the results of each testrunon acustomized dashboard
+- Built SELLELINX's Billing System that calculates the monthly bills of all active users on the platform with AWSLambdafunctions and SQSqueues
+- ExtendeduponthefeaturesofSELLERLINX'scorefeaturesbybuildingRESTfulendpointswithAWSAPIGatewayintegrated withLambdaFunctions
+
+**Web Development Research Assistant**
+
+**UC Davis** | College of Biological Science _January 2020 – July 2022 | Davis, CA_
+
+- Develop multiple React.js applications that create visualization of phylogenetic datasets
+- Incorporate HTML5 Canvas element in the visualization process to enable fast and dynamic re-rendering of trees
+- Utilize Charts.js to create dynamically rendered charts to represent changes in data over time
