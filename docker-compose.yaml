@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  postgres:
+    container_name: postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-myapp}
+      PGDATA: /data/postgres
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # api:
+  #   container_name: fast-api
+  #   build: 
+  #     context: ./py_text_process
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - POSTGRES_HOST=postgres
+  #     - POSTGRES_USER=${POSTGRES_USER:-postgres}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgrespassword}
+  #     - POSTGRES_DB=${POSTGRES_DB:-myapp}
+  #     - MILVUS_HOST=milvus
+  #     - MILVUS_PORT=19530
+  #   depends_on:
+  #     - postgres
+  #     - milvus
