@@ -10,6 +10,8 @@ python = "^3.13"
 sqlmodel = "^0.0.22"
 fastapi = {extras = ["standard"], version = "^0.115.7"}
 python-dotenv = "^1.0.1"
+openai = "^1.60.1"
+psycopg2 = "^2.9.10"
 
 
 [build-system]
