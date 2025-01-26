@@ -6,11 +6,19 @@ authors = ["stephen <chung25stephen@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.13"
-sqlmodel = "^0.0.22"
-fastapi = {extras = ["standard"], version = "^0.115.7"}
+python = "^3.12"
+openai = "^1.59.9"
 python-dotenv = "^1.0.1"
-openai = "^1.60.1"
+fastapi = {extras = ["standard"], version = "^0.115.6"}
+requests = "^2.32.3"
+bs4 = "^0.0.2"
+pandas = "^2.2.3"
+tiktoken = "^0.8.0"
+transformers = "^4.48.1"
+datasets = "^3.2.0"
+torch = "^2.5.1"
+sqlalchemy = "^2.0.37"
+sqlmodel = "^0.0.22"
 psycopg2 = "^2.9.10"
 
 

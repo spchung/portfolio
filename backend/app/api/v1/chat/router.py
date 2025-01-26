@@ -1,6 +1,6 @@
 from fastapi import HTTPException, APIRouter
 from app.db.database import SessionDep
-from app.services.chat import Chat
+from app.services.openai.chat import Chat
 '''
 Simple openAI chat wrapper 
 '''
