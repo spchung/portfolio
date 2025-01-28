@@ -21,6 +21,8 @@ sqlalchemy = "^2.0.37"
 sqlmodel = "^0.0.22"
 psycopg2 = "^2.9.10"
 
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]
