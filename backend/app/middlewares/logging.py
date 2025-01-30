@@ -7,9 +7,6 @@ from functools import wraps
 def log_around_execution(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        print(args)
-        print(kwargs)
-        
         request: Request = kwargs.get("request")
         
         if request:
