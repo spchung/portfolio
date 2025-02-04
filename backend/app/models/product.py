@@ -25,6 +25,7 @@ class Product(SQLModel, table=True):
     def from_dict(cls, data: dict):
         def list_to_text(data: list):
             return '\n'.join(data)
+        
         return cls(
             parent_asin=data.get('parent_asin'),
             title=data.get('title'),
