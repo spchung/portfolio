@@ -18,9 +18,28 @@ class Product(SQLModel, table=True):
     details: dict = Field(sa_column=Column(JSON), default_factory=dict)
     meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
+    def list_to_text(self, data: list):
+        return '\n'.join(data)
+
     @classmethod
     def from_dict(cls, data: dict):
-        return cls(**data)
+        def list_to_text(data: list):
+            return '\n'.join(data)
+        return cls(
+            parent_asin=data.get('parent_asin'),
+            title=data.get('title'),
+            main_category=data.get('main_category'),
+            average_rating=data.get('average_rating'),
+            store=data.get('store'),
+            rating_number=data.get('rating_number'),
+            features=list_to_text(data.get('features')),
+            description=list_to_text(data.get('description')),
+            price=data.get('price'),
+            images=data.get('images'),
+            categories=list_to_text(data.get('categories')),
+            details=data.get('details'),
+            meta=data.get('meta')
+        )
     
     def to_dict(self):
         return self.model_dump()
