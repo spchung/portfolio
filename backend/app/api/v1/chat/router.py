@@ -1,5 +1,5 @@
 from fastapi import HTTPException, APIRouter
-from app.db.database import SessionDep
+from app.db.postgres import SessionDep
 from app.services.openai.chat import Chat
 from app.middlewares.logging import log_around_execution
 

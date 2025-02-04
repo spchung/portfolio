@@ -8,6 +8,9 @@ volumes
 
 .vscode
 
+finetune/
+data_dumps/
+
 __pycache__/
 
 # Logs

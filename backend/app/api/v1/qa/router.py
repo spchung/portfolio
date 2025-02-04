@@ -1,5 +1,5 @@
 from fastapi import HTTPException, APIRouter
-from app.db.database import SessionDep
+from app.db.postgres import SessionDep
 from app.services.huggingface.qa import StrictQaService, answer_question_with_no_answer
 
 '''

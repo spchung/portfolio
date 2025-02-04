@@ -7,3 +7,5 @@ Step 1: keyword parse
 Step 2:
     - fuzzy vector search using description of needs. e.g. "good for student", "suitable for childdren" ... etc
 '''
+
+from app.db.milvus import client
