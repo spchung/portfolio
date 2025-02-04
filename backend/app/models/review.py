@@ -1,0 +1,21 @@
+# sql model
+from sqlmodel import Field, SQLModel
+from sqlalchemy import Text, JSON, Column, DateTime
+from sqlalchemy import BigInteger
+
+class Review(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    title: str | None
+    text: str | None = Field(sa_column=Text())
+    images: dict = Field(sa_column=Column(JSON), default_factory=dict)
+    asin: str | None
+    parent_asin: str | None
+    user_id: str | None
+    timestamp: str | None
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(**data)
+    
+    def to_dict(self):
+        return self.model_dump()
