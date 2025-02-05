@@ -1,7 +1,10 @@
 # sql model
+from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 from sqlalchemy import Text, JSON, Column
+from app.models.milvus import MilvusSearchResultItem
 
+# SQL Model
 class Product(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     parent_asin: str = Field(unique=True)
@@ -44,3 +47,14 @@ class Product(SQLModel, table=True):
     
     def to_dict(self):
         return self.model_dump()
+
+    def to_mixed_model(self, milvusResult: MilvusSearchResultItem):
+        return ProductMixedModel(
+            product=self,
+            milvus=milvusResult
+        )
+
+# Milvius + SQL Model Mixed model for vector search results
+class ProductMixedModel(BaseModel):
+    product: Product
+    milvus: MilvusSearchResultItem
