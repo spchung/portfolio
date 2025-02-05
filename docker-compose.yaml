@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
-      POSTGRES_DB: ${POSTGRES_DB:-myapp}
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio}
       PGDATA: /data/postgres
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/postgres:/data/postgres
