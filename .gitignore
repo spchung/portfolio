@@ -13,6 +13,10 @@ data_dumps/
 
 __pycache__/
 
+/literature/
+
+/data/.flatnotes
+
 # Logs
 logs
 *.log

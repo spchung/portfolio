@@ -1,6 +1,6 @@
 from fastapi import HTTPException, APIRouter
 from app.db.postgres import SessionDep
-from app.services.huggingface.qa import StrictQaService, answer_question_with_no_answer
+from app.core.services.huggingface.qa import StrictQaService, answer_question_with_no_answer
 
 '''
 HuggingFace Q&A with context
