@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 
-from app.embedding.open_ai import create_embedding_1536
+from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from app.db.postgres import engine
 from sqlmodel import Session
 from sqlalchemy.sql import text
