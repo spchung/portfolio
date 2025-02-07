@@ -20,7 +20,6 @@ router = APIRouter()
 '''
 vector search by title
 '''
-
 collection_name="product_title"
 
 @router.post("/title")
@@ -29,7 +28,7 @@ def titleSearch(query: str, session: SessionDep, limit: int = 3):
     serv = MilvusCollectionService(collection_name)
     try:
         # query milvus
-        milvusEnts = serv.query([queryVec], limit=limit)
+        milvusEnts = serv.query([queryVec], anns_field="title_vector" ,limit=limit)
         milvusEnts.sort(key=lambda x: x.id)
         productIds = [str(item.id) for item in milvusEnts]
         

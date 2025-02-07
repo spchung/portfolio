@@ -1,7 +1,9 @@
 # sql model
+from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 from sqlalchemy import Text, JSON, Column, DateTime
 from sqlalchemy import BigInteger
+from app.models.milvus import MilvusSearchResultItem
 
 class Review(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
@@ -19,3 +21,14 @@ class Review(SQLModel, table=True):
     
     def to_dict(self):
         return self.model_dump()
+    
+    def to_mixed_model(self, milvusResult: MilvusSearchResultItem):
+        return ReviewMixedModel(
+            review=self,
+            milvus=milvusResult
+        )
+
+# Milvius + SQL Model Mixed model for vector search results
+class ReviewMixedModel(BaseModel):
+    review: Review
+    milvus: MilvusSearchResultItem

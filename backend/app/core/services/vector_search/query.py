@@ -7,9 +7,10 @@ class MilvusCollectionService:
         self.client = client
         self.collection_name = collection_name
 
-    def query(self, vectors, top_k=5, limit=3) -> List[MilvusSearchResultItem]:
+    def query(self, vectors, anns_field=None, top_k=5, limit=3) -> List[MilvusSearchResultItem]:
         res = self.client.search(
             self.collection_name, 
+            anns_field=anns_field,
             data=vectors, 
             top_k=top_k,
             limit=limit

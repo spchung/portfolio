@@ -7,8 +7,6 @@ from sqlmodel import Session
 from sqlalchemy.sql import text
 from app.models.product import Product
 from app.db.milvus import client
-from pymilvus import utility, Collection
-import numpy as np
 
 collection_name = "product_title"
 
