@@ -30,8 +30,8 @@ def reviewTitleSearch(query: str, session: SessionDep, limit: int = 3):
         return mixedModels
     
     except Exception as e:
-        raise e
-        # raise HTTPException(status_code=500, detail=str(e))
+        # raise e
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/review")
 def reviewSearch(query: str, session: SessionDep, limit: int = 3):
@@ -52,5 +52,5 @@ def reviewSearch(query: str, session: SessionDep, limit: int = 3):
         mixedModels = [pgReview.to_mixed_model(mReview) for mReview, pgReview in zip(milvusEnts, pgReviews)]
         return mixedModels
     except Exception as e:
-        # raise HTTPException(status_code=500, detail=str(e))
-        raise e 
+        raise HTTPException(status_code=500, detail=str(e))
+        # raise e 
