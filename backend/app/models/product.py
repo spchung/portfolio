@@ -54,6 +54,14 @@ class Product(SQLModel, table=True):
             milvus=milvusResult
         )
 
+    def to_llm_context(self):
+        context = f'Product: {self.title}\n Parent Asin: {self.parent_asin}\n'
+        if self.features.strip(): 
+            context += f"Features: {self.features.strip()}"
+        if self.description.strip():
+            context += f"Description: {self.description.strip()}"
+        return context
+
 # Milvius + SQL Model Mixed model for vector search results
 class ProductMixedModel(BaseModel):
     product: Product
