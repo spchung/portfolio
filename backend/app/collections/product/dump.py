@@ -28,11 +28,27 @@ if q.lower() == "n":
     print("Did nothing.")
     sys.exit()
 
+import time
+
 with Session(engine) as sess:
     resp = sess.exec(text("SELECT * FROM product")).all()
+    print(f"Total rows: {len(resp)}")
     batchLimit = 5
     batch = []
+    looped = 0
     for item in resp:
-        batch.append(product_to_milvus_collection_item(Product(**dict(item._mapping))))
-    client.upsert(collection_name="product_title", data=batch)
-    print(f"Inserted {len(batch)} rows into {collection_name}.")
+        print(f"Processing row {item.id}")
+        if len(batch) == batchLimit:
+            client.upsert(collection_name=collection_name, data=batch)
+            print(f"Inserted {len(batch)} rows into {collection_name}.")
+            batch = []
+        else:
+            batch.append(product_to_milvus_collection_item(Product(**dict(item._mapping))))
+        
+        if looped % 5 == 0:
+            time.sleep(45)
+            print("sleeping...")
+        
+    if len(batch) > 0:
+        client.upsert(collection_name=collection_name, data=batch)
+        print(f"Inserted {len(batch)} rows into {collection_name}.")

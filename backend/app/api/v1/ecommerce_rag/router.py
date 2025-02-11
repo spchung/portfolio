@@ -2,6 +2,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
 from app.core.services.huggingface.qa import StrictQaService, answer_question_with_no_answer
 import asyncio
+from typing import List
 
 from openai import OpenAI
 import dotenv
@@ -29,7 +30,6 @@ limit = 3
 
 async def generate_streaming_response(user_query):
     query_label = classifier.classify(user_query)
-    
     if query_label == 'product_search':
         # 1. query milvus
         collection = 'product_title'
@@ -38,7 +38,7 @@ async def generate_streaming_response(user_query):
         milvusEnts = serv.query([queryVec], anns_field="title_vector" ,limit=limit)
         milvusEnts.sort(key=lambda x: x.id)
         productIds = [str(item.id) for item in milvusEnts]
-        
+
         # query pg
         pgProducts = []
         with Session(engine) as sess:
@@ -66,7 +66,36 @@ async def generate_streaming_response(user_query):
             yield chunk.choices[0].delta.content
         await asyncio.sleep(0)
 
-@router.get("/chat")
-async def stream(user_query:str):
+
+async def fake_stream_response(user_input: str):
+    """Simulate token streaming"""
+    for word in ["Hello", "there!", "This", "is", "a", "streaming", "response."]:
+        yield word + " "
+        await asyncio.sleep(0.5)  # Simulating delay
+
+# TODO:
+'''
+context tracker:
+- keep track of products mentioned
+- keep track of user queries
+- keep track of category of products mentioned
+'''
+
+
+from pydantic import BaseModel
+class ChatRequestBody(BaseModel):
+    message: str
+
+@router.post("/chat")
+async def stream(body: ChatRequestBody):
+    user_query = body.message
     return StreamingResponse(generate_streaming_response(user_query), media_type="text/event-stream")
 
+@router.post("/product_review")
+async def product_review(product_ids:List[int], body: ChatRequestBody):
+    user_query = body.message
+    return StreamingResponse(fake_stream_response("test"), media_type="text/event-stream")
+
+@router.post("/similar-recommendation")
+async def product_review(product_ids:List[int], body: ChatRequestBody):
+    pass

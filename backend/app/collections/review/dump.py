@@ -30,17 +30,25 @@ if q.lower() == "n":
     print("Did nothing.")
     sys.exit()
 
+
+import time
 with Session(engine) as sess:
     resp = sess.exec(text("SELECT * FROM review")).all()
-    batchLimit = 5
+    print(f"Total rows: {len(resp)}")
+    batchLimit = 25
     batch = []
+    looped = 0
     for item in resp:
+        print(f"Processing row {item.id}")
         if len(batch) == batchLimit:
             client.upsert(collection_name=collection_name, data=batch)
             print(f"Inserted {len(batch)} rows into {collection_name}.")
             batch = []
-        else:    
+            print("sleeping...")
+            time.sleep(5)
+        else: 
             batch.append(reveiw_to_milvus_collection_item(Review(**dict(item._mapping))))
+        
 
     if len(batch) > 0:
         client.upsert(collection_name=collection_name, data=batch)

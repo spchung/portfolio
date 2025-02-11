@@ -13,6 +13,8 @@ try:
     if q == "y":
         client.drop_collection(collection_name)
     else:
+        res = client.get_collection_stats(collection_name)
+        print(f"{collection_name} has {res['row_count']} rows.")
         print("Did nothing.")
         sys.exit()
     
