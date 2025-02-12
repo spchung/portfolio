@@ -8,6 +8,7 @@ export default function Chat() {
     { role: "bot", content: "Hello! How can I help you today?" },
   ]);
   const [input, setInput] = useState("");
+  const [tokenCount, setTokenCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const sendMessage = async () => {
@@ -35,9 +36,25 @@ export default function Chat() {
         let botResponse = "";
   
         while (true) {
+          // parse incoming chunks
           const { value, done } = await reader.read();
           if (done) break;
-          botResponse += decoder.decode(value, { stream: true });
+
+          const chunk = decoder.decode(value, { stream: true });
+          console.log(chunk);
+          if (chunk.startsWith("event: metadata")) {
+            
+            console.log(chunk);
+
+            const match = chunk.match(/data: (.*)/);
+            if (match) {
+              const metadata = JSON.parse(match[1]);
+              setTokenCount(metadata.tokens_used);
+            }
+            continue;
+          }
+          
+          botResponse += chunk;
   
           setMessages((prev) =>
             prev.map((msg, index) =>
@@ -56,6 +73,7 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 p-4">
+      <h1 className="absolute top-1 right-1 text-2xl font-semibold bg-red-400">MetaData: {tokenCount}</h1>
       <div className="flex-1 overflow-y-auto space-y-2 p-4 bg-white rounded-lg shadow-md">
         {messages.map((msg, index) => (
           <div

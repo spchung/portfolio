@@ -11,13 +11,12 @@ import asyncio
 
 client = OpenAI()
 
-async def product_search_rewrite(userQuery, products: List[Product], stream=False):
+def product_search_rewrite(userQuery, products: List[Product], stream=False, metaData={}):
+    '''
+    milvus product search llm rewrite
+    '''
 
     context = ["\n".join([p.to_llm_context() for p in products])]
-
-    '''
-    milvus product search context aware response
-    '''
     prompt = f"""
     You are an AI assistant specializing in skincare products. Below is a user's question and relevant product information.
     Choose one to two products to recommend the user and briefly explain why.
@@ -38,15 +37,52 @@ async def product_search_rewrite(userQuery, products: List[Product], stream=Fals
             )
 
         return response.choices[0].message.content.strip()
+    
     # stream response
-    response = client.chat.completions.create(
+    return client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "system", "content": "You are an expert skincare assistant."},
                 {"role": "user", "content": prompt}],
         stream=True
     )
-    return response
 
-async def review_search_rewrite(userQuery, reviews: List[Review], stream=False):
-    pass
+def review_search_rewrite(userQuery, reviews: List[Review], products: List[Product], stream=False):
+    
+    # zip reviews and products
+    reviews = sorted(reviews, key=lambda x: x.parent_asin)
+    products = sorted(products, key=lambda x: x.parent_asin)
 
+    reviewContext = ["\n".join([r.to_llm_context() for r in reviews])]
+    productContext = ["\n".join([p.to_llm_context() for p in products])]
+
+    prompt = f"""
+    You are an AI assistant specializing in skincare products. Below is a user's question and relevant review information.
+
+    List of Reviews:
+    {reviewContext}
+
+    List of Products:
+    {productContext}
+
+    User Query:
+    {userQuery}
+
+    Based on the Revviews and products, rate the reviews and recommend suitable products.
+    """ 
+
+    if not stream:
+        response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "system", "content": "You are an expert skincare assistant."},
+                        {"role": "user", "content": prompt}]
+            )
+
+        return response.choices[0].message.content.strip()
+    
+    # stream response
+    return client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "system", "content": "You are an expert skincare assistant."},
+                {"role": "user", "content": prompt}],
+        stream=True
+    )

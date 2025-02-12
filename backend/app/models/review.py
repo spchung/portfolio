@@ -28,6 +28,12 @@ class Review(SQLModel, table=True):
             milvus=milvusResult
         )
 
+    def to_llm_context(self):
+        context = f'Title: {self.title}\nParent Asin: {self.parent_asin}\n'
+        if self.text.strip(): 
+            context += f"Review: {self.text.strip()}"
+        return context
+
 # Milvius + SQL Model Mixed model for vector search results
 class ReviewMixedModel(BaseModel):
     review: Review

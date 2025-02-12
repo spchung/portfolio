@@ -23,34 +23,49 @@ from sqlmodel import Session
 from app.db.postgres import engine
 from sqlalchemy.sql import text
 from app.models.product import Product
-from .llm_rewrite import product_search_rewrite
-from .handlers import search_product_title
+from .llm_rewrite import product_search_rewrite, review_search_rewrite
+from .handlers import search_product_title, search_review
+from collections import defaultdict
+
 
 classifier = RetailIntentClassifier()
 limit = 3
 
 async def generate_streaming_response(user_query):
+    metaData = defaultdict(str)
     queryLabel = classifier.classify(user_query)
+    metaData['intention'] = queryLabel
+
     if queryLabel == 'product_search':
-        response = await search_product_title(user_query, limit)
+        query, pgProducts = await search_product_title(user_query, limit, metaData=metaData)
+        # send to llm for rewrite
+        response = product_search_rewrite(query, pgProducts, stream=True, metaData=metaData)
 
     elif queryLabel == 'review_search':
-        
-
-        yield "review wip"
+        query, reviews, products = await search_review(user_query, limit)
+        response = review_search_rewrite(query, reviews, products, stream=True)
     else:
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "system", "content": "You are a helpful skincare assistant."},
                     {"role": "user", "content": user_query}],
             stream=True  # Enable streaming
-        ) 
+        )
 
-    # stream response
+    # track total tokens used (rough estimate)
+    totalResponseTokens = 0
     for chunk in response:
         if chunk.choices[0].delta.content:
-            yield chunk.choices[0].delta.content
+            content = chunk.choices[0].delta.content
+            totalResponseTokens += len(content.split())
+            yield content
         await asyncio.sleep(0)
+    
+
+    metaData['tokens_used'] = totalResponseTokens
+    
+    # yield metadata
+    yield f'event: metadata\ndata: {json.dumps(metaData)}\n\n'
 
 
 async def fake_stream_response(user_input: str):
@@ -70,6 +85,7 @@ context tracker:
 
 
 from pydantic import BaseModel
+import json
 class ChatRequestBody(BaseModel):
     message: str
 
