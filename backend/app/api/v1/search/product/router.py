@@ -11,9 +11,10 @@ from fastapi import HTTPException, APIRouter
 from app.db.milvus import client
 from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from app.core.services.vector_search.query import MilvusCollectionService
-from app.db.postgres import SessionDep
+from app.db.postgres import SessionDepAsync, AsyncSession
 from app.models.product import Product
-from sqlalchemy.sql import text
+from sqlalchemy.sql import text, select
+from typing import List
 
 router = APIRouter()
 
@@ -23,19 +24,18 @@ vector search by title
 collection_name="product_title"
 
 @router.post("/title")
-def titleSearch(query: str, session: SessionDep, limit: int = 3):
+async def titleSearch(query: str, session: SessionDepAsync, limit: int = 3):
     queryVec = create_embedding_1536(query)
     serv = MilvusCollectionService(collection_name)
     try:
         # query milvus
         milvusEnts = serv.query([queryVec], anns_field="title_vector" ,limit=limit)
         milvusEnts.sort(key=lambda x: x.id)
-        productIds = [str(item.id) for item in milvusEnts]
+        productIds = [item.id for item in milvusEnts]
         
         # query postgres
-        q = f"SELECT * FROM product WHERE id IN ({','.join(productIds)}) order by id"
-        rows = session.exec(text(q)).all()
-        pgProducts = [Product(**dict(row._mapping)) for row in rows]
+        rows = await session.execute(select(Product).filter(Product.id.in_(productIds)).order_by(Product.id))
+        pgProducts = rows.scalars().all()
 
         # zip sorted results and product mixed models
         mixedModels = [pgProd.to_mixed_model(mProd) for mProd, pgProd in zip(milvusEnts, pgProducts)]

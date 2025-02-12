@@ -11,7 +11,7 @@ from app.api.v1.ecommerce_rag.router import router as rag_router
 router = APIRouter()
 
 router.include_router(chat_router, prefix="/chat", tags=["chat"])
-router.include_router(qa_router, prefix="/qa", tags=["qa"])
-router.include_router(summary_router, prefix='/summary', tags=['summary'])
+# router.include_router(qa_router, prefix="/qa", tags=["qa"])
+# router.include_router(summary_router, prefix='/summary', tags=['summary'])
 router.include_router(search_router, prefix='/search', tags=['search'])
 router.include_router(rag_router, prefix='/ecommerce-rag', tags=['ecommerce-rag'])

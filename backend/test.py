@@ -1,9 +1,9 @@
-from app.core.ecommerce_rag.query_classifier import RetailIntentClassifier
+from backend.app.api.v1.ecommerce_rag.query_classifier import RetailIntentClassifier
 from app.db.postgres import engine
 from sqlmodel import Session
 from sqlalchemy.sql import text
 from app.models.product import Product
-from app.core.ecommerce_rag.context_aware_response import product_query_response
+from backend.app.api.v1.ecommerce_rag.llm_rewrite import product_query_response
 
 classifier = RetailIntentClassifier()
 sess = Session(engine)

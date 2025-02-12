@@ -5,12 +5,13 @@ from openai import OpenAI
 import dotenv
 dotenv.load_dotenv()
 from app.models.product import Product
+from app.models.review import Review
 from typing import List
 import asyncio
 
 client = OpenAI()
 
-async def product_query_response(userQuery, products: List[Product], stream=False):
+async def product_search_rewrite(userQuery, products: List[Product], stream=False):
 
     context = ["\n".join([p.to_llm_context() for p in products])]
 
@@ -19,6 +20,7 @@ async def product_query_response(userQuery, products: List[Product], stream=Fals
     '''
     prompt = f"""
     You are an AI assistant specializing in skincare products. Below is a user's question and relevant product information.
+    Choose one to two products to recommend the user and briefly explain why.
     
     Context:
     {context}
@@ -45,4 +47,6 @@ async def product_query_response(userQuery, products: List[Product], stream=Fals
     )
     return response
 
+async def review_search_rewrite(userQuery, reviews: List[Review], stream=False):
+    pass
 

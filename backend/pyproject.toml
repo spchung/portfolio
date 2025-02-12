@@ -17,10 +17,11 @@ tiktoken = "^0.8.0"
 transformers = "^4.48.1"
 datasets = "^3.2.0"
 torch = "^2.5.1"
-sqlalchemy = "^2.0.37"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
 sqlmodel = "^0.0.22"
 psycopg2 = "^2.9.10"
 pymilvus = "^2.5.4"
+asyncpg = "^0.30.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"

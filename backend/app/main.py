@@ -1,6 +1,6 @@
 from fastapi import FastAPI, APIRouter
 from app.api.v1.routes import router as api_v1_router
-from app.db.postgres import create_db_and_tables
+from app.db.postgres import create_db_and_tables, dispose
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -24,3 +24,4 @@ app.add_middleware(
 app.include_router(api_v1_router, prefix="/api/v1")
 
 app.on_event("startup")(create_db_and_tables)
+app.on_event("shutdown")(dispose)
