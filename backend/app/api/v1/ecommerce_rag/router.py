@@ -46,7 +46,7 @@ async def generate_streaming_response(user_query):
         response = review_search_rewrite(query, reviews, products, stream=True)
     else:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": "You are a helpful skincare assistant."},
                     {"role": "user", "content": user_query}],
             stream=True  # Enable streaming

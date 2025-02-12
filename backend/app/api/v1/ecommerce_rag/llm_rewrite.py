@@ -31,7 +31,7 @@ def product_search_rewrite(userQuery, products: List[Product], stream=False, met
     """
     if not stream:
         response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "system", "content": "You are an expert skincare assistant."},
                         {"role": "user", "content": prompt}]
             )
@@ -40,7 +40,7 @@ def product_search_rewrite(userQuery, products: List[Product], stream=False, met
     
     # stream response
     return client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": "You are an expert skincare assistant."},
                 {"role": "user", "content": prompt}],
         stream=True
@@ -72,7 +72,7 @@ def review_search_rewrite(userQuery, reviews: List[Review], products: List[Produ
 
     if not stream:
         response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "system", "content": "You are an expert skincare assistant."},
                         {"role": "user", "content": prompt}]
             )
@@ -81,7 +81,7 @@ def review_search_rewrite(userQuery, reviews: List[Review], products: List[Produ
     
     # stream response
     return client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": "You are an expert skincare assistant."},
                 {"role": "user", "content": prompt}],
         stream=True

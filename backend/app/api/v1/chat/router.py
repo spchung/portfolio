@@ -9,8 +9,7 @@ Simple openAI chat wrapper
 
 router = APIRouter()
 
-chat_client = Chat(model="gpt-4o")
-
+chat_client = Chat(model="gpt-3.5-turbo")
 
 @router.post("/")
 @log_around_execution
