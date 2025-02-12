@@ -50,7 +50,9 @@ async def generate_streaming_response(user_query):
         response = await product_query_response(user_query, pgProducts, stream=True)
 
     elif query_label == 'review_search':
-        ## TODO
+        collection = 'review'
+        queryVec = create_embedding_1536(user_query)
+        
         yield "review wip"
     else:
         response = client.chat.completions.create(
@@ -92,7 +94,7 @@ async def stream(body: ChatRequestBody):
     return StreamingResponse(generate_streaming_response(user_query), media_type="text/event-stream")
 
 @router.post("/product_review")
-async def product_review(product_ids:List[int], body: ChatRequestBody):
+async def product_review(product_ids: List[int], body: ChatRequestBody):
     user_query = body.message
     return StreamingResponse(fake_stream_response("test"), media_type="text/event-stream")
 
