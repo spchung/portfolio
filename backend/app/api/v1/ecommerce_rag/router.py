@@ -1,58 +1,37 @@
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
-from app.core.services.huggingface.qa import StrictQaService, answer_question_with_no_answer
 import asyncio
+from collections import defaultdict
 from typing import List
-
-from openai import OpenAI
-import dotenv
-dotenv.load_dotenv()
-
-client = OpenAI()
+from app.core.preprocessing.embedding.open_ai import create_embedding_1536
+from .llm_handlers.open_ai_handler import OpenAIHandler
 
 '''
 Ecommerce Rag Entry Point
 '''
 
 router = APIRouter()
-
-from app.api.v1.ecommerce_rag.query_classifier import RetailIntentClassifier
-from app.core.services.vector_search.query import MilvusCollectionService
-from app.core.preprocessing.embedding.open_ai import create_embedding_1536
-from sqlmodel import Session
-from app.db.postgres import engine
-from sqlalchemy.sql import text
-from app.models.product import Product
-from .llm_rewrite import product_search_rewrite, review_search_rewrite
-from .handlers import search_product_title, search_review
-from collections import defaultdict
-
-
-classifier = RetailIntentClassifier()
 limit = 3
 
-async def generate_streaming_response(user_query):
+async def generate_streaming_response(user_query: str):
     metaData = defaultdict(str)
-    queryLabel = classifier.classify(user_query)
+    
+    handler = OpenAIHandler()
+    queryLabel = handler.classify_query(user_query)
+
     metaData['intention'] = queryLabel
 
     if queryLabel == 'product_search':
-        query, pgProducts = await search_product_title(user_query, limit, metaData=metaData)
-        # send to llm for rewrite
-        response = product_search_rewrite(query, pgProducts, stream=True, metaData=metaData)
-
+        query, pgProducts = await handler.search_product_title(user_query, limit, metaData=metaData)
+        response = handler.product_search_rewrite(query, pgProducts, stream=True, metaData=metaData)
+    
     elif queryLabel == 'review_search':
-        query, reviews, products = await search_review(user_query, limit)
-        response = review_search_rewrite(query, reviews, products, stream=True)
-    else:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": "You are a helpful skincare assistant."},
-                    {"role": "user", "content": user_query}],
-            stream=True  # Enable streaming
-        )
+        query, reviews, products = await handler.search_review(user_query, limit)
+        response = handler.review_search_rewrite(query, reviews, products, stream=True)
 
-    # track total tokens used (rough estimate)
+    else:
+       response = handler.create_completions(user_query, stream=True)
+
     totalResponseTokens = 0
     for chunk in response:
         if chunk.choices[0].delta.content:
