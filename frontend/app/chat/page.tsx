@@ -36,20 +36,20 @@ export default function Chat() {
         let botResponse = "";
   
         while (true) {
+          
           // parse incoming chunks
           const { value, done } = await reader.read();
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          console.log(chunk);
           if (chunk.startsWith("event: metadata")) {
-            
-            console.log(chunk);
 
             const match = chunk.match(/data: (.*)/);
             if (match) {
               const metadata = JSON.parse(match[1]);
-              setTokenCount(metadata.tokens_used);
+              console.log("metadata", metadata);
+              console.log(metadata.last_response_tokens);
+              setTokenCount(metadata.last_response_tokens);
             }
             continue;
           }
