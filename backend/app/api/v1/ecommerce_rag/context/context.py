@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime as dt
+from app.models.product import Product
+from app.models.review import Review
 
 class ChatHistory(BaseModel):
     user_query: str | None = None
@@ -8,7 +10,7 @@ class ChatHistory(BaseModel):
     user_intent: str | None = None
     topic: str | None = None # could be product name, or category name
     timestamp: float | None = None
-    struct_data: dict | None = None# for any structured data as additional context
+    struct_data: dict | None = None # for any structured data as additional context
 
     def serialize(self):
         return self.model_dump_json()
@@ -22,6 +24,9 @@ class MetaData(BaseModel):
     last_query_start_time: float | None = None
     last_query_end_time: float | None = None
     elapsed_seconds: float = 0
+    last_query_intent: str | None = None
+    products: List[Product] | None = None
+    reviews: List[Review] | None = None
 
     def serialize(self):
         return self.model_dump_json()

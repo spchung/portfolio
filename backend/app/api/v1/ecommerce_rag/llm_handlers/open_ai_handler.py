@@ -25,6 +25,7 @@ class OpenAIHandler(I_EcommerceRag):
         - general_chat: if it's a casual conversation.
         - product_search: if it's about skincare product recommendations.
         - review_search: if it's about customer reviews or opinions.
+        - review_of_product: if it's about a review of a specific product.
         
         Query: "{query}"
         Classification:
@@ -36,12 +37,44 @@ class OpenAIHandler(I_EcommerceRag):
                     {"role": "user", "content": prompt}]
         )
 
-        choices = ['general_chat', 'product_search', 'review_search']
+        choices = ['general_chat', 'product_search', 'review_search', 'review_of_product']
 
         res = response.choices[0].message.content.strip()
         return res if res in choices else "general_chat"
     
-    async def search_product_title(self, query: str, limit:int, metaData={}) -> Tuple[str, List[Product]]:
+    def classify_query_v2(self, query: str, context: str = None):
+        prompt = f"""
+            You are an AI assistant that classifies user queries into one of four categories: 
+
+            1. **general_chat** - The user is engaging in casual conversation, and the query is unrelated to products or reviews.
+            2. **product_search** - The user is searching for a product or product category.
+            3. **review_search** - The user is asking for general opinions or reviews about a product category.
+            4. **review_of_product** - The user is asking about reviews or opinions of a **specific** product or an ongoing product discussion.
+
+            ### **Classify the following user query:**  
+            {"### Context: The user is currently discussing the following product or category: " + context + ". Always consider this context when classifying the query." if context else ""}
+            **User Query:** "{query}"
+
+            **Instructions:**  
+            - Respond with ONLY the category name:  
+            - general_chat  
+            - product_search  
+            - review_search  
+            - review_of_product  
+        """
+
+        response = self.client.chat.completions.create(
+            model="chatgpt-4o-latest",
+            messages=[{"role": "system", "content": "You are an expert query classifier for a beauty chatbot."},
+                    {"role": "user", "content": prompt}]
+        )
+
+        choices = ['general_chat', 'product_search', 'review_search', 'review_of_product']
+
+        res = response.choices[0].message.content.strip()
+        return res if res in choices else "general_chat"
+    
+    async def search_product_title(self, query: str, limit:int) -> Tuple[str, List[Product]]:
         collection = 'product_title'
         queryVec = create_embedding_1536(query)
         self.milvusService.set_collection(collection)
@@ -96,6 +129,9 @@ class OpenAIHandler(I_EcommerceRag):
         {userQuery}
 
         Based on the context, generate a helpful response that answers the user's question while recommending suitable products.
+
+        ** Instructions: **
+        DO NOT include products or reviews not provided in the context.
         """
         if not stream:
             response = self.client.chat.completions.create(
@@ -134,7 +170,10 @@ class OpenAIHandler(I_EcommerceRag):
         User Query:
         {userQuery}
 
-        Based on the Revviews and products, rate the reviews and recommend suitable products.
+        Based on the context, list the top 2-3 products and their reviews that are most relevant to the user's query.
+
+        ** Instructions: **
+        DO NOT include products or reviews not provided in the context.
         """ 
 
         if not stream:
@@ -154,6 +193,43 @@ class OpenAIHandler(I_EcommerceRag):
             stream=True
         )
     
+    def review_of_product_rewrite(self, userQuery, product: Product, reviews: List[Review], stream=False):
+        
+        reviews = sorted(reviews, key=lambda x: x.parent_asin)
+        reviewContext = ["\n".join([r.to_llm_context() for r in reviews])]
+
+        prompt = f"""
+        You are an AI assistant specializing in skincare products. Below is a user's question about a specific product.
+
+        List of Reviews:
+        {reviewContext}
+
+        Product: 
+        {product.to_llm_context()}
+
+        User Query:
+        {userQuery}
+
+        Based on the context, provide a detailed review of the product and answer any questions the user may have.
+        """
+
+        if not stream:
+            response = self.client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "system", "content": "You are a helpful skincare assistant."},
+                            {"role": "user", "content": prompt}]
+                )
+
+            return response.choices[0].message.content.strip()
+        
+        # stream response
+        return self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "You are a helpful skincare assistant."},
+                    {"role": "user", "content": prompt}],
+            stream=True
+        )
+
     def create_completions(self, user_query: str, stream=False):
         response = self.client.chat.completions.create(
             model="gpt-3.5-turbo",

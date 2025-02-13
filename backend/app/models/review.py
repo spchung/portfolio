@@ -9,7 +9,7 @@ class Review(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     title: str | None
     text: str | None = Field(sa_column=Text())
-    images: dict = Field(sa_column=Column(JSON), default_factory=dict)
+    images: list = Field(sa_column=Column(JSON), default_factory=list)
     asin: str | None
     parent_asin: str | None
     user_id: str | None

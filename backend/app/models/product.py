@@ -16,7 +16,7 @@ class Product(SQLModel, table=True):
     features: str = Field(sa_column=Text())
     description: str = Field(sa_column=Text())
     price: float | None
-    images: dict = Field(sa_column=Column(JSON), default_factory=dict)
+    images: list = Field(sa_column=Column(JSON), default_factory=list)
     categories: str = Field(sa_column=Text())
     details: dict = Field(sa_column=Column(JSON), default_factory=dict)
     meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
