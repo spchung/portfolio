@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import List
 from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from .llm_handlers.open_ai_handler import OpenAIHandler
+from app.api.v1.ecommerce_rag.context.context import ChatHistory, EcommerceRagContextManager
 
 '''
 Ecommerce Rag Entry Point
@@ -12,18 +13,24 @@ Ecommerce Rag Entry Point
 
 router = APIRouter()
 limit = 3
+contextManager = EcommerceRagContextManager(session_id="test")
 
 async def generate_streaming_response(user_query: str):
-    metaData = defaultdict(str)
+    ## TEMP: check context
+    print(contextManager.serialize())
     
+    chaHistory = ChatHistory()
     handler = OpenAIHandler()
-    queryLabel = handler.classify_query(user_query)
+    
+    contextManager.start_response()
+    chaHistory.user_query = user_query
 
-    metaData['intention'] = queryLabel
+    queryLabel = handler.classify_query(user_query)
+    chaHistory.user_intent = queryLabel
 
     if queryLabel == 'product_search':
-        query, pgProducts = await handler.search_product_title(user_query, limit, metaData=metaData)
-        response = handler.product_search_rewrite(query, pgProducts, stream=True, metaData=metaData)
+        query, pgProducts = await handler.search_product_title(user_query, limit)
+        response = handler.product_search_rewrite(query, pgProducts, stream=True)
     
     elif queryLabel == 'review_search':
         query, reviews, products = await handler.search_review(user_query, limit)
@@ -33,18 +40,25 @@ async def generate_streaming_response(user_query: str):
        response = handler.create_completions(user_query, stream=True)
 
     totalResponseTokens = 0
+    full_response = ""
     for chunk in response:
         if chunk.choices[0].delta.content:
             content = chunk.choices[0].delta.content
-            totalResponseTokens += len(content.split())
+            totalResponseTokens += len(content)
+            full_response += content
             yield content
         await asyncio.sleep(0)
-    
 
-    metaData['tokens_used'] = totalResponseTokens
+    # log response
+    chaHistory.response = full_response
     
+    # log total token
+    contextManager.end_response(token_count=totalResponseTokens)
+    chaHistory.complete()
+    contextManager.add_chat_history(chaHistory)
+
     # yield metadata
-    yield f'event: metadata\ndata: {json.dumps(metaData)}\n\n'
+    yield f'event: metadata\ndata: {contextManager.metadata.serialize()}\n\n'
 
 
 async def fake_stream_response(user_input: str):
