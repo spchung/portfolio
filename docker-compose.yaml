@@ -88,17 +88,21 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+  
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     
-  # attu:
-  #   container_name: milvus-attu
-  #   image: zilliz/attu:v2.5.0
-  #   # environment:
-  #   ports:
-  #     - "8000:3000"
-  #   depends_on:
-  #     - "milvus"
-  #   networks:
-  #     - default
   
   # api:
   #   container_name: fast-api
@@ -117,3 +121,4 @@ services:
   #   depends_on:
   #     - postgres
   #     - milvus
+  #     - redis
