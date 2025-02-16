@@ -20,7 +20,7 @@ class Review(SQLModel, table=True):
         return cls(**data)
     
     def to_dict(self):
-        return self.model_dump()
+        return self.model_dump()    
     
     def to_mixed_model(self, milvusResult: MilvusSearchResultItem):
         return ReviewMixedModel(
