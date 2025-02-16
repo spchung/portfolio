@@ -1,15 +1,16 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatPanel from './chat-panel';
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { AiFillEye, AiFillEyeInvisible, AiOutlineBars } from "react-icons/ai";
 import DevPanel from './dev-panel';
 import { useRagStore } from "@/stores/use-rag-store";
 
 export default function page() {
     const { state, setSessionId } = useRagStore();
     const [devPanelIsOpen, setIsOpenDevPanel] = useState(false);
+    const sideBarTriggerRef = useRef<HTMLButtonElement>(null);
     
     if (!state.sessionId) {
         setSessionId('test');
@@ -18,15 +19,21 @@ export default function page() {
     return ( 
         <div className="flex h-full w-full">
             <div className='flex flex-col w-full'>
-                <div className="w-full bg-gray-200 p-3">
-                    <SidebarTrigger />
+                <div className="w-full bg-gray-200 flex">
+                    <SidebarTrigger ref={sideBarTriggerRef} className='hidden'/>
                     <button
-                        className="hover:bg-white text-white font-bold py-[4px] px-[4px] rounded"
+                        className="hover:bg-white text-white font-bold p-3 rounded"
+                        onClick={() => sideBarTriggerRef.current?.click()}
+                    >
+                        <AiOutlineBars className='text-gray-700'/>
+                    </button>
+                    <button
+                        className="hover:bg-white text-white font-bold p-3 rounded"
                         onClick={() => setIsOpenDevPanel(!devPanelIsOpen)}
                     >
                         { devPanelIsOpen ? <AiFillEyeInvisible className='text-gray-700'/> : <AiFillEye className='text-gray-700'/> }
                     </button>
-                    <p> Count: {state.iterateContextCount}; sessionId: {state.sessionId} </p>
+                    <p className='p-[4px]'> Count: {state.iterateContextCount} - Session ID: {state.sessionId} </p>
                 </div>
                 <div className="flex-1 bg-gray-100 p-4">
                     <ChatPanel />
