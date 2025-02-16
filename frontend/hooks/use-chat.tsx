@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { fetchChatStream } from "@/services/chat-service";
-import { Metadata } from "@/models";
+import { useRagStore } from "@/stores/use-rag-store";
 
 export interface Message {
   role: "user" | "bot";
@@ -13,8 +13,8 @@ export function useChat() {
     { role: "bot", content: "Hello! How can I help you today?" },
   ]);
   const [input, setInput] = useState<string>("");
-  const [metadata, setMetadata] = useState<Metadata>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const iterateContext = useRagStore((state) => state.iterateContext);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -35,19 +35,14 @@ export function useChat() {
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        
+        // streaming response ends - call for new context snapshot
+        if (done) {
+          iterateContext();
+          break;
+        }
 
         const chunk = decoder.decode(value, { stream: true });
-
-        if (chunk.startsWith("event: metadata")) {
-          const match = chunk.match(/data: (.*)/);
-          if (match) {
-            const metadata = JSON.parse(match[1]);
-            console.log("Metadata:", metadata);
-            setMetadata(metadata);
-          }
-          continue;
-        }
 
         botResponse += chunk;
         setMessages((prev) =>
@@ -69,7 +64,6 @@ export function useChat() {
     messages,
     input,
     setInput,
-    metadata,
     sendMessage,
     messagesEndRef,
   };

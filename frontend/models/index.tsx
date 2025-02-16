@@ -1,3 +1,20 @@
+
+export type Context = {
+    session_id:  string;
+    history:     History[];
+    window_size: number;
+    metadata:    Metadata;
+}
+
+export type History = {
+    user_query:  string;
+    response:    string;
+    user_intent: string;
+    topic:       null;
+    timestamp:   number;
+    struct_data: null;
+}
+
 export type Metadata = {
     last_response_tokens:  number;
     last_query_start_time: number;
