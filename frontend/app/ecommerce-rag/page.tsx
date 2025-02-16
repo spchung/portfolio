@@ -1,10 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ChatPanel from '../dash/chat-panel';
+import ChatPanel from './chat-panel';
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-import DevPanel from '../dash/dev-panel';
+import DevPanel from './dev-panel';
 import { useRagStore } from "@/stores/use-rag-store";
 
 export default function page() {

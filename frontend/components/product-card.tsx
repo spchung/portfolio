@@ -1,8 +1,8 @@
-"use client"; // only if you're in Next.js and want this to be a client component
-
+"use client";
 import { useState } from "react";
-import { Product } from "@/models"; // adjust the import path to your local types
+import { Product } from "@/models";
 import { motion } from "framer-motion";
+
 type ProductCardProps = {
   product: Product;
 };

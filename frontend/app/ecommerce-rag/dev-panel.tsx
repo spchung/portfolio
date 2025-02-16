@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useRagStore } from '@/stores/use-rag-store';
 import { useContext } from '@/hooks/use-context';
-import { ProductCard } from '@/components/product-card';
+// import { ProductCard } from '@/components/product-card';
+import { ProductCardV2 } from '@/components/product-card-v2';
 
 
 export default function DevPanel() {
@@ -17,7 +18,7 @@ export default function DevPanel() {
       <div className='flex-1'>
         {
           products?.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCardV2 key={product.id} product={product} className="p-2 mb-1" />
           ))
         }
       </div>
