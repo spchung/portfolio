@@ -3,6 +3,7 @@ import { useRagStore } from '@/stores/use-rag-store';
 import { useContext } from '@/hooks/use-context';
 // import { ProductCard } from '@/components/product-card';
 import { ProductCardV2 } from '@/components/product-card-v2';
+import { Review } from '@/models';
 
 
 export default function DevPanel() {
@@ -18,7 +19,12 @@ export default function DevPanel() {
       <div className='flex-1'>
         {
           products?.map((product) => (
-            <ProductCardV2 key={product.id} product={product} className="p-2 mb-1" />
+            <ProductCardV2 
+              key={product.id} 
+              product={product} 
+              reviews={findProductReviews(product.parent_asin, reviews) ?? []}
+              className="p-2 mb-1"
+            />
           ))
         }
       </div>
@@ -27,4 +33,10 @@ export default function DevPanel() {
       </div>
     </div>
   )
+}
+
+
+function findProductReviews(productParentASIN: string, reviews: Review[] | undefined): Review[] | undefined {
+  if (!reviews) return undefined;
+  return reviews.filter(review => review.parent_asin === productParentASIN);
 }
