@@ -4,7 +4,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
 from .llm_handlers.open_ai_handler import OpenAIHandler
 from app.api.v1.ecommerce_rag.context.context import ChatHistory, EcommerceRagContextManager
-from .chat_handler import generate_streaming_response, get_context_snapshot
+from .chat_handler import generate_streaming_response, get_context_snapshot, clear_context_snapshot
 
 '''
 Ecommerce Rag Entry Point
@@ -13,7 +13,6 @@ Ecommerce Rag Entry Point
 router = APIRouter()
 
 from pydantic import BaseModel
-import json
 class ChatRequestBody(BaseModel):
     message: str
 
@@ -27,6 +26,10 @@ async def stream(body: ChatRequestBody):
 @router.get("/context-snapshot")
 async def context_snapshot(session_id: str):
     return await get_context_snapshot(session_id)
+
+@router.delete("/clear-context-snapshot")
+async def context_snapshot(session_id: str):
+    return await clear_context_snapshot(session_id)
 
 @router.get("/test-classifier")
 async def product_review(msg: str, context:str=None):
