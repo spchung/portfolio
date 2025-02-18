@@ -11,6 +11,8 @@ volumes
 finetune/
 data_dumps/
 
+data_engineering
+
 __pycache__/
 
 /literature/

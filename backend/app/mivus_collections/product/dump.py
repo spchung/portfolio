@@ -5,7 +5,7 @@ from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from app.db.postgres import engine
 from sqlmodel import Session
 from sqlalchemy.sql import text
-from app.models.product import Product
+from app.models.pg.product import Product
 from app.db.milvus import client
 
 collection_name = "product_title"

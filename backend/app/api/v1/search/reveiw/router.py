@@ -3,8 +3,8 @@ from app.db.milvus import client
 from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from app.core.services.vector_search.query import MilvusCollectionService
 from app.db.postgres import SessionDep, SessionDepAsync
-# from app.models.product import Product
-from app.models.review import Review
+# from app.models.pg.product import Product
+from app.models.pg.review import Review
 from sqlalchemy.sql import text, select
 
 router = APIRouter()

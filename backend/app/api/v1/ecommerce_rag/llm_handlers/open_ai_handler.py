@@ -3,8 +3,8 @@ from openai import OpenAI
 from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from typing import Tuple, List
 from sqlmodel import Session, select
-from app.models.product import Product
-from app.models.review import Review
+from app.models.pg.product import Product
+from app.models.pg.review import Review
 from app.core.services.vector_search.query import MilvusCollectionService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.postgres import engine, asyncEngine

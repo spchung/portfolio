@@ -2,7 +2,7 @@ from backend.app.api.v1.ecommerce_rag.query_classifier import RetailIntentClassi
 from app.db.postgres import engine
 from sqlmodel import Session
 from sqlalchemy.sql import text
-from app.models.product import Product
+from app.models.pg.product import Product
 from backend.app.api.v1.ecommerce_rag.llm_rewrite import product_query_response
 
 classifier = RetailIntentClassifier()

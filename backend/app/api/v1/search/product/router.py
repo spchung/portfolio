@@ -12,7 +12,7 @@ from app.db.milvus import client
 from app.core.preprocessing.embedding.open_ai import create_embedding_1536
 from app.core.services.vector_search.query import MilvusCollectionService
 from app.db.postgres import SessionDepAsync, AsyncSession
-from app.models.product import Product
+from app.models.pg.product import Product
 from sqlalchemy.sql import text, select
 from typing import List
 

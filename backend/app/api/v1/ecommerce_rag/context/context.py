@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime as dt
-from app.models.product import Product
-from app.models.review import Review
+from app.models.pg.product import Product
+from app.models.pg.review import Review
 from openai import OpenAI
 
 import dotenv
