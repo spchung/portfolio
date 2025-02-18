@@ -7,12 +7,18 @@ import { Review } from '@/models';
 
 
 export default function DevPanel() {
-  const iterateContextCount = useRagStore(store => store.state.iterateContextCount);
   const { context } = useContext();
 
   const history = context?.history;
+  const runningSummary = context?.running_summary;
+  const last_prompt = context?.last_prompt;
+  const intent = context?.metadata.last_query_intent;
   const products = context?.metadata.products;
   const reviews = context?.metadata.reviews;
+
+  useEffect(() => {
+    console.log(last_prompt);
+  }, [last_prompt]);
 
   return (
     <div className='flex flex-col h-full'>
@@ -29,7 +35,9 @@ export default function DevPanel() {
         }
       </div>
       <div className='flex-1'> 
-        Contexual information
+        <h2>Summary</h2>
+        <p>{runningSummary}</p>
+        <h2>Intent: {intent}</h2>
       </div>
     </div>
   )

@@ -14,7 +14,7 @@ const ChatPanel: React.FC = () => {
   } = useChat();
 
   return (
-    <div className="flex flex-col bg-gray-100 p-4 h-full w-full">
+    <div className="flex flex-col bg-gray-100 p-4 max-h-screen w-full overflow-y-auto">
       <ChatWindow messages={messages} messagesEndRef={messagesEndRef} />
       <ChatInput input={input} setInput={setInput} sendMessage={sendMessage} />
     </div>

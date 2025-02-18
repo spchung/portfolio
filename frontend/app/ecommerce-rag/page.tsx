@@ -6,9 +6,10 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { AiFillEye, AiFillEyeInvisible, AiOutlineBars } from "react-icons/ai";
 import DevPanel from './dev-panel';
 import { useRagStore } from "@/stores/use-rag-store";
+import { deleteContext } from '@/services/context-service';
 
 export default function page() {
-    const { state, setSessionId } = useRagStore();
+    const { state, setSessionId, iterateContext } = useRagStore();
     const [devPanelIsOpen, setIsOpenDevPanel] = useState(false);
     const sideBarTriggerRef = useRef<HTMLButtonElement>(null);
     
@@ -33,6 +34,10 @@ export default function page() {
                     >
                         { devPanelIsOpen ? <AiFillEyeInvisible className='text-gray-700'/> : <AiFillEye className='text-gray-700'/> }
                     </button>
+                    <button onClick={ () => {
+                        deleteContext(state.sessionId);
+                        iterateContext();
+                    }}> clear context </button>
                     <p className='p-[4px]'> Count: {state.iterateContextCount} - Session ID: {state.sessionId} </p>
                 </div>
                 <div className="flex-1 bg-gray-100 p-4">

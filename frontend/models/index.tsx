@@ -4,6 +4,8 @@ export type Context = {
     history:     History[];
     window_size: number;
     metadata:    Metadata;
+    running_summary: string;
+    last_prompt:     string;
 }
 
 export type History = {
