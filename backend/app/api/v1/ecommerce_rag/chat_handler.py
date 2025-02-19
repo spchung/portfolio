@@ -5,6 +5,7 @@ from app.db.redis import r
 from fastapi import HTTPException
 from app.api.v1.ecommerce_rag.intent_classifier import IntentClassifier
 from app.api.v1.ecommerce_rag.enum import INTENT_ENUM
+
 limit = 1
 llmCtxMgr = EcommerceRagContextManager(session_id="test")
 
