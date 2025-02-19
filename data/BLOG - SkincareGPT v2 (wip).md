@@ -9,5 +9,3 @@ This knowledge base will contain two parts:
 The knowledge store will help with questions like
 \- "Is XXX ingredient good for someone with dry skin?"
 \- "Should I apply XXX product before YYY product"
-
-<br>
