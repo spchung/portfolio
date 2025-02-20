@@ -60,6 +60,7 @@ class RunningSummaryManager():
 
         turnsToSummarize = chatHistory[:-self.k]
 
+        previousSummary = None
         if len(turnsToSummarize) > self.windowSize:
             turnsToSummarize = turnsToSummarize[-self.windowSize:]
             previousSummary = self.running_summary
@@ -68,7 +69,6 @@ class RunningSummaryManager():
         chatContext = ""
         for chat in turnsToSummarize:
             chatContext += f"User: {chat.user_query}\n"
-
         
         prompt = f"""
         Make a short summary what the user has been talking about below:
@@ -100,6 +100,7 @@ class RunningSummaryManager():
 
         summary = response.choices[0].message.content.strip()
         self.running_summary = summary
+        print(summary)
         return summary
     
     def __repr__(self):

@@ -7,7 +7,7 @@ from app.models.pg.product import Product
 from app.models.pg.review import Review
 from app.core.services.vector_search.query import MilvusCollectionService
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.postgres import engine, asyncEngine
+from app.db.postgres import engine, async_engine
 
 import dotenv
 dotenv.load_dotenv()
@@ -17,9 +17,9 @@ class OpenAIHandler(I_EcommerceRag):
     def __init__(self, model="gpt-3.5-turbo"):
         self.client = OpenAI()
         self.model = model
-        self.milvusService = MilvusCollectionService()
+        self.milvus_service = MilvusCollectionService()
     
-    def classify_query(self, query:str):
+    def classify_query(self, query: str):
         prompt = f"""
         Classify the following query into one of the categories:
         - general_chat: if it's a casual conversation.
@@ -74,33 +74,33 @@ class OpenAIHandler(I_EcommerceRag):
         res = response.choices[0].message.content.strip()
         return res if res in choices else "general_chat"
     
-    async def search_product_title(self, query: str, limit:int) -> Tuple[str, List[Product]]:
+    async def search_product_title(self, query: str, limit: int) -> Tuple[str, List[Product]]:
         collection = 'product_title'
-        queryVec = create_embedding_1536(query)
-        self.milvusService.set_collection(collection)
+        query_vec = create_embedding_1536(query)
+        self.milvus_service.set_collection(collection)
         
-        milvusEnts = self.milvusService.query([queryVec], anns_field="title_vector" ,limit=limit)
-        milvusEnts.sort(key=lambda x: x.distance)
-        productIds = [item.id for item in milvusEnts]
+        milvus_ents = self.milvus_service.query([query_vec], anns_field="title_vector", limit=limit)
+        milvus_ents.sort(key=lambda x: x.distance)
+        product_ids = [item.id for item in milvus_ents]
 
         # query pg
-        pgProducts = []
+        pg_products = []
         # Query PostgreSQL using SQLAlchemy ORM
-        async with AsyncSession(asyncEngine) as session:
-            result = await session.execute(select(Product).filter(Product.id.in_(productIds)).order_by(Product.id))
-            pgProducts = result.scalars().all()
+        async with AsyncSession(async_engine) as session:
+            result = await session.execute(select(Product).filter(Product.id.in_(product_ids)).order_by(Product.id))
+            pg_products = result.scalars().all()
 
-        return query, pgProducts
+        return query, pg_products
     
-    async def search_review(self, query:str, limit:int) -> Tuple[str, List[Review], List[Product]]:
+    async def search_review(self, query: str, limit: int) -> Tuple[str, List[Review], List[Product]]:
         collection = 'review'
-        queryVec = create_embedding_1536(query)
-        self.milvusService.set_collection(collection)
+        query_vec = create_embedding_1536(query)
+        self.milvus_service.set_collection(collection)
         milvusEnts = self.milvusService.query([queryVec], anns_field="review_vector", limit=limit)
         milvusEnts.sort(key=lambda x: x.distance)
         reviewIds = [item.id for item in milvusEnts]
         # query pg - get reviews and Products
-        async with AsyncSession(asyncEngine) as session:
+        async with AsyncSession(async_engine) as session:
             # get top reveiw parent_asins
             reviews = await session.execute(
                 select(Review).filter(Review.id.in_(reviewIds)).order_by(Review.id))

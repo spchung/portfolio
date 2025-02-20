@@ -33,6 +33,10 @@ async def query_vector(body: ChatRequestBody):
 def context_snapshot(session_id: str):
     return handler.get_context_snapshot()
 
+@router.get("/last-prompt")
+def last_prompt(session_id: str):
+    return handler.get_last_prompt()
+
 # @router.delete("/clear-context-snapshot")
 # async def context_snapshot(session_id: str):
 #     return await clear_context_snapshot(session_id)

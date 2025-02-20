@@ -1,5 +1,7 @@
 
 from qdrant_client import QdrantClient, models
+from app.core.preprocessing.embedding.open_ai import create_embedding_768
+from typing import List
 
 client = QdrantClient(url="http://localhost:6333")
 
@@ -19,30 +21,22 @@ class QdrantStoreService:
             top_k=top_k
         )
     
-    def search(self, query_vector, top_k=5, filters: dict | None=None):
-
-        conditions = None
-        if not filters is None:
-            conditions = []
-            for key, value in filters.items():
-                conditions.append(
-                    models.FieldCondition(
-                        key=key,
-                        match=models.MatchValue(
-                            value=value
-                        )
-                ))
+    async def search(self, raw_query, top_k=5, filters: dict = {}, match_all_filters=False) -> List[models.ScoredPoint]:
+        queryVec = create_embedding_768(raw_query)
+        if match_all_filters:
+            query_filter=models.Filter(
+                must=[models.FieldCondition(
+                    key=k,match=models.MatchValue(value=v)) for k, v in filters.items()])
+        else:
+            query_filter=models.Filter(
+                any=[models.FieldCondition(
+                    key=k,match=models.MatchValue(value=v)) for k, v in filters.items()])
         
-        query_filter = None
-        if not conditions is None:
-            query_filter = models.Filter(
-                conditions=conditions
-            )
-        
-        return self.client.query_points(
+        result = self.client.query_points(
             collection_name=self.collection_name,
-            query=query_vector,
+            query=queryVec,
             limit=top_k,
             query_filter=query_filter,
-            # search_params=models.SearchParams(hnsw_ef=128, exact=False),
         )
+
+        return [p for p in result.points]

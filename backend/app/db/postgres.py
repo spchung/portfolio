@@ -21,7 +21,7 @@ SQLALCHEMY_DATABASE_URL = f"postgresql://{user}:{password}@{host}/{db_name}"
 ASYNC_SQLALCHEMY_DATABASE_URL = f"postgresql+asyncpg://{user}:{password}@{host}/{db_name}"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-asyncEngine = create_async_engine(ASYNC_SQLALCHEMY_DATABASE_URL)
+async_engine = create_async_engine(ASYNC_SQLALCHEMY_DATABASE_URL)
 
 def get_session():
     with Session(engine) as session:
