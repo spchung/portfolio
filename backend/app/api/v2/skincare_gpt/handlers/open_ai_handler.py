@@ -12,6 +12,7 @@ from app.api.v2.skincare_gpt.classifier.intent_classifier import IntentClassifie
 from app.db.postgres import async_engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from qdrant_client import QdrantClient, models
 from app.models.pg.sephora import SephoraProduct, SephoraReview
 
 import dotenv
@@ -21,7 +22,8 @@ class OpenAIHandler():
     def __init__(self, model="chatgpt-4o-latest"):
         self.client = OpenAI()
         self.model = model
-        self.qdrant = QdrantStoreService(collection_name="SkincareGPT_768")
+        # self.qdrant = QdrantStoreService(collection_name="SkincareGPT_768")
+        self.qdrant_client = QdrantClient(url="http://localhost:6333")
         self.llm_ctx_mgr = SkincareGPTContextManager('test-session')
         self.intent_classifier = IntentClassifier(self.llm_ctx_mgr)
 
@@ -29,6 +31,7 @@ class OpenAIHandler():
         res = self.qdrant.search(query)
         return res
     
+    # main chat function
     async def chat(self, query):
         # 0. begin 
         self.llm_ctx_mgr.start_response()
@@ -47,7 +50,7 @@ class OpenAIHandler():
         reviews = None
 
         if intent == INTENT_ENUM.SEARCH:
-            pass
+            response = await self.search(query)
         elif intent == INTENT_ENUM.KNOWLEDGE:
             response = await self.knowledge_search(query)
         else: 
@@ -98,28 +101,84 @@ class OpenAIHandler():
         return r.get('last_prompt')
 
     # INTENT - SEARCH
-    def vector_search(self, query):
-        res = self.query_vector(query)
-        return res
+    async def search(self, query):
+        context_limit = 3
 
+        # 0. get positive or negative
+        sentiment = self.binary_sentiment_analysis(query)
+
+        filters = []
+        filters.append(("vector_column", "product_highlights"))
+        filters.append(("vector_column", "product_ingredients"))
+        filters.append(("vector_column", "product_name"))
+
+        qdrant_res = self.qdrant_client.query_points(
+            collection_name="SkincareGPT_768",
+            query=create_embedding_768(query),
+            limit=15,
+            query_filter=models.Filter(
+                should=[models.FieldCondition(
+                    key=k, match=models.MatchValue(value=v)) for k, v in filters]
+            )
+        )
+
+        # assume always return points
+        points = qdrant_res.points
+
+        # 2. get products
+        # sort by score
+        points.sort(key=lambda x: x.score, reverse=True)
+
+        product_ids = []
+        for p in points[:context_limit]:
+            product_ids.append(p.payload.get("product_id"))
+
+        async with AsyncSession(async_engine) as session:
+            products = await session.execute(
+                select(SephoraProduct).filter(
+                    SephoraProduct.product_id.in_(product_ids)).order_by(SephoraProduct.product_id))
+            products = products.scalars().all()
+        
+        # get ingredients
+        ingredients = set()
+        for p in products:
+            ingredients.update(p.ingredients)
+
+        
+        # 3. PROMPT FOR REWRITE
+        response = await self.llm_rewrite(
+            INTENT_ENUM.SEARCH,
+            query,
+            sentiment,
+            products=products,
+            ingredients=ingredients
+        )
+        return response
+
+    # INTENT - KNOWLEDGE
     async def knowledge_search(self, query):
         context_limit = 5
 
         # 0. get positive or negative
         sentiment = self.binary_sentiment_analysis(query)
-        print(sentiment)
 
         # 1. search reviews 
         filters = {"vector_column": "review_text"}
         if sentiment == "positive" or "negative":
             filters['is_recommended'] = sentiment == "positive"
 
-        points = await self.qdrant.search(
-            query, 
-            top_k=15, 
-            filters=filters,
-            match_all_filters=True,
+        qdrant_res = self.qdrant_client.query_points(
+            collection_name="SkincareGPT_768",
+            query=create_embedding_768(query),
+            limit=15,
+            query_filter=models.Filter(
+                must=[models.FieldCondition(
+                    key=k, match=models.MatchValue(value=v)) for k, v in filters.items()]
+            )
         )
+
+        # assume always return points
+        points = qdrant_res.points
 
         # 2. get products & review text
         # sort by score
@@ -134,13 +193,14 @@ class OpenAIHandler():
         async with AsyncSession(async_engine) as session:
             reviews = await session.execute(
                 select(SephoraReview).filter(
-                    SephoraReview.review_id.in_(review_ids)).order_by(SephoraReview.review_id))
+                    SephoraReview.review_id.in_(review_ids)).order_by(SephoraReview.product_id))
             reviews = reviews.scalars().all()
             
             products = await session.execute(
                 select(SephoraProduct).filter(
                     SephoraProduct.product_id.in_(product_ids)).order_by(SephoraProduct.product_id))
             products = products.scalars().all()
+
             
         # 3. get ingredients
         ingredients = set()
@@ -199,12 +259,41 @@ class OpenAIHandler():
         intnet: INTENT_ENUM, 
         query: str, 
         sentiment: str,
-        products: List[SephoraProduct] = None, 
+        products: List[SephoraProduct] = None,
         reviews: List[SephoraReview] = None,
         ingredients: List[str] = None
     ):
         if intnet == INTENT_ENUM.SEARCH:
-            prompt = query
+            llm_generated_response = "I recommed trying XXX product because contains the key ingredients YYY and ZZZ."
+            
+            context = ""
+            for product in products:
+                context += f"Name: {product.product_name}\n"
+                context += f"Brand: {product.brand_name}\n"
+                context += f"Ingredients: {','.join(product.ingredients)}\n"
+                context += f"Highlights: {','.join(product.highlights)}\n"
+
+            prompt = f"""
+            You are an expert AI assistant specializing in skincare. Given a user query, your task is to generate a knowledgeable, well-structured response using the retrieved **reviews, product details, and ingredient information**.
+
+            ### Context:
+            - **User Query:** "{query}"
+            - **Sentiment:** {sentiment}
+            - **Relevant Products:**  
+            {context}  
+
+            ### Instructions:
+            - **Use the retrieved product reviews to provide real-world insights** (mention common experiences, benefits, and concerns).
+            '- **Explain the role of key ingredients**, especially how they relate to the user’s query.'
+            - **Keep it concise, well-structured, and free of unnecessary repetition.**
+            - **Maintain a helpful, informative, and friendly tone.**
+
+            ### Example Response Format:
+            "{llm_generated_response}"
+
+            ### Output:
+            Generate a final response based on this information, ensuring it is **direct, informative, and engaging**. Do not include any formatting or extra explanations—just provide the response.
+            """
         elif intnet == INTENT_ENUM.KNOWLEDGE:
             llm_generated_response = "This product is great for dry skin. It contains hyaluronic acid and glycerin, which are known for their hydrating properties. The reviews mention that it absorbs quickly and..."
             

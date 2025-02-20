@@ -26,11 +26,11 @@ class QdrantStoreService:
         if match_all_filters:
             query_filter=models.Filter(
                 must=[models.FieldCondition(
-                    key=k,match=models.MatchValue(value=v)) for k, v in filters.items()])
+                    key=k, match=models.MatchValue(value=v)) for k, v in filters.items()])
         else:
             query_filter=models.Filter(
-                any=[models.FieldCondition(
-                    key=k,match=models.MatchValue(value=v)) for k, v in filters.items()])
+                should=[models.FieldCondition(
+                    key=k, match=models.MatchValue(value=v)) for k, v in filters.items()])
         
         result = self.client.query_points(
             collection_name=self.collection_name,
