@@ -29,6 +29,8 @@ dotenv.load_dotenv()
 from openai import OpenAI
 
 class IntentClassifier:
+    model = "gpt-4o-mini"
+
     def __init__(self, llmCtxMgr: SkincareGPTContextManager):
         self.llmCtxMgr = llmCtxMgr
         self.llmClient = OpenAI()
@@ -37,16 +39,13 @@ class IntentClassifier:
         runningSummary = self.llmCtxMgr.running_summary
         chatHistory = self.llmCtxMgr.history[-self.llmCtxMgr.k_chat_size:]
         kTurnUserQueries = "\n".join([f"User: {chat.user_query}" for chat in chatHistory])
-
         
         prompt = f"""You are an AI assistant that classifies user queries into the following intents:
-        1. **general_chat** - casual conversation, unrelated to products or reviews.
-        2. **product_search** - searching for a product.
-        3. **product_category_search** - searching for a product category.
-        4. **review_search** - searching for products based on user reviews.
-        5. **review_of_product** - asking about reviews or opinions of a **specific** product.
+        1. **chat** - casual conversation unrelated to products, reviews, or skincare knowledge.
+        2. **search** - searching for a product, product category, or reviews of a product.
+        3. **knowledge** - asking about skincare ingredients, routines, best practices, or product usage advice.
 
-        Use the running summary of old messages and last few user queries to classify the **new** user query:
+        Use the running summary of previous messages and recent user queries to classify the **new** user query:
 
         Running Summary:
         {runningSummary if runningSummary else "No running summary available"}
@@ -57,14 +56,16 @@ class IntentClassifier:
         New User Query:
         {userQuery}
 
-        **Instructions:** Respond with ONLY the category name."""
+        **Instructions:** Respond with ONLY the category name: "chat", "search", or "knowledge"."""
 
         response = self.llmClient.chat.completions.create(
             temperature=0,
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": "You are an expert query classifier for an ecommerce platform."},
+            model=self.model,
+            messages=[{"role": "system", "content": "You are an expert query classifier for an skincare ecommerce platform."},
                     {"role": "user", "content": prompt}]
         )
 
+        # print(response)
         res = response.choices[0].message.content.strip()
+        print(res)
         return INTENT_ENUM(res), prompt

@@ -4,6 +4,7 @@ from datetime import datetime as dt
 from app.models.pg.product import Product
 from app.models.pg.review import Review
 from openai import OpenAI
+import json
 
 import dotenv
 dotenv.load_dotenv()
@@ -38,13 +39,8 @@ class MetaData(BaseModel):
 
 
 ## service
-class RunningSummaryManager(BaseModel):
-    k: int
-    windowSize: int
-    running_summary: str
-    llm: OpenAI
-
-    def __init__(self, llm, k: int = 3, windowSize: int = 5):
+class RunningSummaryManager():
+    def __init__(self, k: int = 3, windowSize: int = 5):
         self.k = k
         self.windowSize = windowSize
         self.llm = OpenAI()
@@ -109,25 +105,25 @@ class RunningSummaryManager(BaseModel):
     def __repr__(self):
         return self.running_summary
     
-class SkincareGPTContextManager(BaseModel):
-    session_id: str
-    history: List[ChatHistory] = []
-    window_size: int = 5 # how many ChatHistory object to keep track
-    k_chat_size: int = 3 # how many ChatHistory object to consider as is
-    metadata: MetaData = MetaData()
-    running_summary: str | None = None
-    last_prompt: str | None = None
-    running_summary_manager: RunningSummaryManager
-
+class SkincareGPTContextManager():
     def __init__(self, session_id: str, window_size: int = 5, k_chat_size: int = 3):
         self.session_id = session_id
+        self.history = []
         self.window_size = window_size
         self.k_chat_size = k_chat_size
         self.metadata = MetaData()
-        self.running_summary_manager = RunningSummaryManager(llm=OpenAI(), k=k_chat_size, windowSize=window_size)
+        self.running_summary = None
+        self.last_prompt = None
+        self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
 
     def serialize(self):
-        return self.model_dump_json()
+        return json.dumps({
+            "session_id": self.session_id,
+            "history": [history.model_dump() for history in self.history],
+            "metadata": self.metadata.model_dump(),
+            "running_summary": self.running_summary,
+            "last_prompt": self.last_prompt
+        })
     
     ## metadata methods
     def start_response(self) -> None:
