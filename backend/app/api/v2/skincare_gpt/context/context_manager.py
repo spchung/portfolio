@@ -114,8 +114,8 @@ class SkincareGPTContextManager():
         self.running_summary = None
         self.last_prompt = None
         self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
-        self.products = [] 
-        self.reviews = []
+        self.product_ids = [] 
+        self.review_ids = []
 
     def serialize(self):
         return json.dumps({
@@ -124,8 +124,8 @@ class SkincareGPTContextManager():
             "metadata": self.metadata.model_dump(),
             "running_summary": self.running_summary,
             "last_prompt": self.last_prompt,
-            "products": [product.model_dump() for product in self.products],
-            "reviews": [review.model_dump() for review in self.reviews]
+            "product_ids": self.product_ids,
+            "review_ids": self.review_ids
         })
     
     ## metadata methods
@@ -137,11 +137,11 @@ class SkincareGPTContextManager():
         self.metadata.elapsed_seconds = self.metadata.last_query_end_time - self.metadata.last_query_start_time
         self.metadata.last_response_tokens = token_count
 
-    def set_products(self, products: List[Product]) -> None:
-        self.products = products
+    def set_product_ids(self, product_ids: List[str]) -> None:
+        self.product_ids = product_ids
     
-    def set_reviews(self, reviews: List[Review]) -> None:
-        self.reviews = reviews
+    def set_reviews(self, review_ids: List[str]) -> None:
+        self.review_ids = review_ids
 
     ## context methods
     def add_chat_history(self, chat_history: ChatHistory) -> None:

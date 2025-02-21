@@ -138,7 +138,7 @@ class OpenAIHandler():
             ingredients.update(p.ingredients)
         
         # context operations
-        self.llm_ctx_mgr.set_products(products)
+        self.llm_ctx_mgr.set_product_ids([p.product_id for p in  products])
 
         # 3. PROMPT FOR REWRITE
         response = await self.llm_rewrite(
@@ -203,8 +203,8 @@ class OpenAIHandler():
             ingredients.update(p.ingredients)
 
         # context operations
-        self.llm_ctx_mgr.set_products(products)
-        self.llm_ctx_mgr.set_reviews(reviews)
+        self.llm_ctx_mgr.set_product_ids([p.product_id for p in  products])
+        self.llm_ctx_mgr.set_reviews([r.review_id for r in reviews])
 
         # 4. PROMPT FOR REWRITE
         response = await self.llm_rewrite(
