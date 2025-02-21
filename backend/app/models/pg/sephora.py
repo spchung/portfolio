@@ -52,9 +52,6 @@ class SephoraProduct(SQLModel, table=True):
             teritary_category=data.get('teritary_category')
         )
 
-    def to_dict(self):
-        return self.model_dump_json()
-
 class SephoraReview(SQLModel, table=True):
     __tablename__ = 'sephora_review'
     review_id: str = Field(primary_key=True) ##

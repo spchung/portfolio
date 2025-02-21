@@ -22,7 +22,6 @@ class OpenAIHandler():
     def __init__(self, model="chatgpt-4o-latest"):
         self.client = OpenAI()
         self.model = model
-        # self.qdrant = QdrantStoreService(collection_name="SkincareGPT_768")
         self.qdrant_client = QdrantClient(url="http://localhost:6333")
         self.llm_ctx_mgr = SkincareGPTContextManager('test-session')
         self.intent_classifier = IntentClassifier(self.llm_ctx_mgr)
@@ -44,10 +43,6 @@ class OpenAIHandler():
         chat_history = ChatHistory()
         chat_history.user_query = query
         chat_history.user_intent = intent.value
-        
-        # TODO: handle by response
-        products = None
-        reviews = None
 
         if intent == INTENT_ENUM.SEARCH:
             response = await self.search(query)
@@ -75,8 +70,6 @@ class OpenAIHandler():
         self.llm_ctx_mgr.end_response(token_count=total_response_tokens)
         self.llm_ctx_mgr.add_chat_history(chat_history)
         self.llm_ctx_mgr.metadata.last_query_intent = intent.value
-        self.llm_ctx_mgr.metadata.products = products
-        self.llm_ctx_mgr.metadata.reviews = reviews
 
         r.set(self.llm_ctx_mgr.session_id, self.llm_ctx_mgr.serialize())
     
@@ -143,8 +136,10 @@ class OpenAIHandler():
         ingredients = set()
         for p in products:
             ingredients.update(p.ingredients)
-
         
+        # context operations
+        self.llm_ctx_mgr.set_products(products)
+
         # 3. PROMPT FOR REWRITE
         response = await self.llm_rewrite(
             INTENT_ENUM.SEARCH,
@@ -206,6 +201,10 @@ class OpenAIHandler():
         ingredients = set()
         for p in products:
             ingredients.update(p.ingredients)
+
+        # context operations
+        self.llm_ctx_mgr.set_products(products)
+        self.llm_ctx_mgr.set_reviews(reviews)
 
         # 4. PROMPT FOR REWRITE
         response = await self.llm_rewrite(

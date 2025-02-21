@@ -1,5 +1,3 @@
-import asyncio
-from typing import List
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
 from app.api.v2.skincare_gpt.handlers.open_ai_handler import OpenAIHandler

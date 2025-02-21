@@ -30,8 +30,6 @@ class MetaData(BaseModel):
     last_query_end_time: float | None = None
     elapsed_seconds: float = 0
     last_query_intent: str | None = None
-    products: List[Product] | None = None
-    reviews: List[Review] | None = None
 
     def serialize(self):
         return self.model_dump_json()
@@ -116,6 +114,8 @@ class SkincareGPTContextManager():
         self.running_summary = None
         self.last_prompt = None
         self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
+        self.products = [] 
+        self.reviews = []
 
     def serialize(self):
         return json.dumps({
@@ -123,7 +123,9 @@ class SkincareGPTContextManager():
             "history": [history.model_dump() for history in self.history],
             "metadata": self.metadata.model_dump(),
             "running_summary": self.running_summary,
-            "last_prompt": self.last_prompt
+            "last_prompt": self.last_prompt,
+            "products": [product.model_dump() for product in self.products],
+            "reviews": [review.model_dump() for review in self.reviews]
         })
     
     ## metadata methods
@@ -134,6 +136,12 @@ class SkincareGPTContextManager():
         self.metadata.last_query_end_time = dt.now().timestamp()
         self.metadata.elapsed_seconds = self.metadata.last_query_end_time - self.metadata.last_query_start_time
         self.metadata.last_response_tokens = token_count
+
+    def set_products(self, products: List[Product]) -> None:
+        self.products = products
+    
+    def set_reviews(self, reviews: List[Review]) -> None:
+        self.reviews = reviews
 
     ## context methods
     def add_chat_history(self, chat_history: ChatHistory) -> None:
