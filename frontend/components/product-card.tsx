@@ -2,6 +2,7 @@
 import { Product, Review } from "@/models";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { SkinCareIcon } from "./skincare-icon";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@radix-ui/react-hover-card";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
@@ -13,20 +14,11 @@ interface ProductCardProps extends React.ComponentPropsWithoutRef<"div"> {
     reviews: Review[] | undefined;
 };
 
-export function ProductCardV2({ product, reviews, className }: ProductCardProps) {
+export function ProductCard({ product, reviews, className }: ProductCardProps) {
     const {
         brand_name,
         product_name,
-        rating,
-        size,
-        price_usd,
-        highlights,
-        teritary_category,
-        loves_count,
-        brand_id,
         product_id,
-        reviews: reveiwCount,
-        ingredients,
         primary_category,
         secondary_category,
     } = product;
@@ -53,7 +45,7 @@ export function ProductCardV2({ product, reviews, className }: ProductCardProps)
                 productId={product_id}
                 title={product_name} 
                 mainCategory={primary_category} 
-                categories={secondary_category} 
+                category={secondary_category} 
                 store={brand_name} 
                 className="text-m font-semibold"
                 {...(productReviewMap ? { reviews: productReviewMap.get(product_id) } : {})}
@@ -68,7 +60,7 @@ interface ProductOverviewProps extends React.ComponentPropsWithoutRef<'h2'> {
     productId: string;
     title: string;
     mainCategory: string;
-    categories: string;
+    category: string;
     store: string;
     reviews?: Review[];
 }
@@ -77,7 +69,7 @@ function ProductOverview({
     title, 
     className,
     mainCategory,
-    categories,
+    category,
     store,
     reviews,
     productId,
@@ -88,32 +80,35 @@ function ProductOverview({
     return (
         <>
             <div className={cn("flex flex-col justify-start w-full p-3", className)}>
-                <div className="flex flex-row justify-between w-full">
-                    <p className="w-[95%] font-bold overflow-hidden text-ellipsis truncate">{trimmedTitle}</p>
-                    {
-                        reviews ? (
+                <div className="flex flex-row gap-3">
+                    <div className="min-w-[30px] min-h-[30px]">
+                        <SkinCareIcon type={category} width={35} height={35} />
+                    </div>
+                    <div className="flex flex-row justify-between w-[95%] items-center">
+                        <p className="w-full font-bold overflow-hidden text-ellipsis truncate text-start">{trimmedTitle}</p>
+                        {reviews ? (
                             <button 
-                                className="w-10 text-gray-500 pt-1 font-bold flex hover:text-gray-700 flex-row gap-[3px] hover:underline"
+                                className="min-w-10 text-gray-500 font-bold hover:text-gray-700 hover:underline"
                                 onClick={() => dialogRef.current?.click()}
                             >
                                 <MdReviews className="mt-1 h-6 w-6"/>
                             </button>
-                        ) : null
-                    }
+                        ) : null}
+                    </div>
                 </div>
-                <div className="flex flex-row gap-[10px]">
-                    <p className="text-sm text-gray-500">{mainCategory}</p>
-                    <p className="text-sm text-gray-500">{categories}</p>
+                <div className="flex flex-row gap-[10px] mt-1">
+                    <p className="text-sm text-gray-500">{category}</p>
                     <p className="text-sm text-gray-500">{store}</p>
                 </div>
-                {reviews ? (
-                    <div className="flex flex-row gap-[10px]">
-                        <p className="text-sm text-gray-500">{reviews.length} reviews</p>
-                        <p className="text-sm text-gray-500">{reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length} stars</p>
-                    </div>
-                ) : <p className="text-sm text-gray-500"> No reviews </p>}
             </div>
-            <ReviewsDialog reviews={reviews ?? []} productId={productId} productName={title} ref={dialogRef}/>
+            <ReviewsDialog 
+                reviews={reviews ?? []} 
+                productId={productId} 
+                productCategory={category} 
+                productName={title} 
+                productBrand={store}
+                ref={dialogRef}
+            />
         </>
     )
 }
@@ -135,18 +130,21 @@ import { fetchProductReviews } from '@/services/review-service';
 interface ReviewsDialog {
     reviews: Review[];
     productId: string;
+    productCategory: string;
     productName: string;
+    productBrand: string;
     ref: React.RefObject<HTMLButtonElement | null>;
 }
 
-function ReviewsDialog({ reviews, productId, productName, ref }: ReviewsDialog) {
-
-    const [otherReviews, setOtherReviews] = useState([]);
+function ReviewsDialog({ reviews, productId, productCategory, productName, productBrand, ref }: ReviewsDialog) {
     const [isLoadOtherReviews, setIsLoadOtherReviews] = useState(false);
 
-    const { isPending: reviewIsPending, error: reviewHasError, data: reviewData, isFetching: reviewIsFetching } = useQuery({
+    const { isPending: reviewIsPending, error: reviewHasError, data: otherReviews, isFetching: reviewIsFetching } = useQuery({
         queryKey: ['productId', productId],
-        queryFn: () => fetchProductReviews(productId),
+        queryFn: () => fetchProductReviews(productId).then((data) => {
+            let existingRevewIds = reviews.map((review) => review.review_id);
+            return data.filter((review) => !existingRevewIds.includes(review.review_id));
+        }),
         enabled: isLoadOtherReviews,
       })
 
@@ -155,9 +153,13 @@ function ReviewsDialog({ reviews, productId, productName, ref }: ReviewsDialog) 
             <DialogTrigger asChild className="hidden">
                 <Button ref={ref} variant="outline">Reviews</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[80%] max-h-[80%] overflow-y-auto">
+            <DialogContent className="max-w-[60%] max-h-[80%] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle> {productName} </DialogTitle>
+                    <div className="flex flex-row gap-4 items-center">
+                        <SkinCareIcon type={productCategory} width={50} height={50} />
+                        <DialogTitle className="text-[25px]"> {productName} </DialogTitle>
+                        <p className="mt-auto">by <span className="font-bold">{productBrand}</span></p>
+                    </div>
                     <div className="font-bold">Relavant Reviews:</div>
                     <div className="flex flex-col gap-2 pl-2">
                         {reviews.map((review) => (
@@ -173,7 +175,7 @@ function ReviewsDialog({ reviews, productId, productName, ref }: ReviewsDialog) 
                             >
                                 <div className="font-bold"> Other Reviews: </div>
                                 <div className="flex flex-col gap-2 pl-2">
-                                    { reviewIsPending ? 'Loading...' : reviewHasError ? 'An error has occurred: ' + reviewHasError.message : reviewData.map((review) => (
+                                    { reviewIsPending ? 'Loading...' : reviewHasError ? 'An error has occurred: ' + reviewHasError.message : otherReviews.map((review) => (
                                         <ReviewContainer {...review} key={review.review_id}/>
                                     ))}
                                 </div>
@@ -193,10 +195,14 @@ function ReviewsDialog({ reviews, productId, productName, ref }: ReviewsDialog) 
     )
 }
 
+import { FaRegThumbsDown } from "react-icons/fa";
+import { FaRegThumbsUp } from "react-icons/fa";
+
 function ReviewContainer(review: Review) {
     return (
-        <div className="flex flex-col justify-start w-full">
-            <div className="flex flex-row gap-2 w-full">
+        <div className={`flex flex-col justify-start w-full rounded-lg p-4 ${review.is_recommended ? 'bg-blue-100' : 'bg-orange-100'}`}>
+            <div className="flex flex-row gap-2 w-full items-center">
+                {review.is_recommended ? <FaRegThumbsUp className="h-4 w-4"/> : <FaRegThumbsDown className="h-4 w-4"/>}
                 <StarRating rating={review.rating} />
                 <p className="font-bold text-lg overflow-hidden text-ellipsis truncate text-black">{review.review_title}</p>
             </div>
@@ -204,6 +210,7 @@ function ReviewContainer(review: Review) {
         </div>
     )
 }
+
 function StarRating({ rating }: { rating: number }) {
     // Convert rating number into a 5-star visual
     const stars = Array.from({ length: 5 }, (_, i) => i < Math.round(rating));

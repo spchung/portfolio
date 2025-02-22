@@ -1,8 +1,6 @@
 'use client';
 import { useContext } from '@/hooks/use-context';
-import { Review } from '@/models';
 import { EntityPanel} from './entity-panel';
-
 
 export default function DevPanel() {
   const { context } = useContext();
@@ -20,9 +18,9 @@ export default function DevPanel() {
         <EntityPanel productIds={product_ids} reviewIds={review_ids} />
       </div>
       <div className='flex-1'> 
-        <h2>Summary</h2>
-        <p>{runningSummary}</p>
-        <h2>Intent: {intent}</h2>
+        <p className='overflow-auto'>
+          Running Summary: {runningSummary}
+        </p>
       </div>
     </div>
   )

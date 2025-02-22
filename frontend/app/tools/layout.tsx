@@ -1,9 +1,12 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+'use client';
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
+import { useSidebarStore } from "@/stores/use-sidebar-store"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const { isOpen } = useSidebarStore((state) => state.state);
   return (
-    <SidebarProvider>
+    <SidebarProvider open={isOpen}>
       <AppSidebar />
       <main className='w-full'>
         {children}

@@ -16,7 +16,11 @@ export const useRagStore = create<StoreState>((set, get) => ({
         sessionId: 'test',
         iterateContextCount: 0
     },
-    setSessionId: (sessionId: string) => set((store) => ({ state: { ...store.state, sessionId } })),
-    iterateContext: () => set((store) => ({ state: { ...store.state, iterateContextCount: store.state.iterateContextCount + 1 } }))
+    setSessionId: (sessionId: string) => set((store) => ({ 
+        state: { ...store.state, sessionId } 
+    })),
+    iterateContext: () => set((store) => ({ 
+        state: { ...store.state, iterateContextCount: store.state.iterateContextCount + 1 } 
+    }))
 }));
 

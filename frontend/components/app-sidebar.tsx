@@ -1,5 +1,8 @@
+'use client';
+import { Monomaniac_One } from "next/font/google";
 import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
-
+import { BsWindowSidebar } from "react-icons/bs";
+import { useSidebarStore } from '@/stores/use-sidebar-store';
 import {
   Sidebar,
   SidebarContent,
@@ -9,43 +12,49 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 // Menu items.
 const items = [
   {
-    title: "Home",
+    title: "SkincareGPT",
     url: "#",
     icon: Home,
   },
   {
-    title: "Inbox",
+    title: "Hugginface Summarizer",
     url: "#",
     icon: Inbox,
   },
   {
-    title: "Calendar",
+    title: "ChatGPT Wrapper",
     url: "#",
     icon: Calendar,
   },
   {
-    title: "Search",
+    title: "Chat With Your Papers",
     url: "#",
     icon: Search,
   },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
 ]
 
+
+const monomanic = Monomaniac_One({ subsets: ["latin"], weight: "400" });
 export function AppSidebar() {
+  const { toggle } = useSidebarStore();
   return (
     <Sidebar>
-      <SidebarContent>
+      <SidebarContent >
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <div className='flex items-center pl-2 pb-2'>
+            <button className="hover:bg-white text-white font-boldrounded"
+                onClick={() => toggle()}
+            >
+                <BsWindowSidebar className='text-gray-700 h-6 w-6'/>
+            </button>
+            <SidebarGroupLabel>Tools</SidebarGroupLabel>
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
