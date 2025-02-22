@@ -27,10 +27,18 @@ async def stream(body: BatchRequestBody, session: SessionDepAsync) -> BatchRespo
         "total": len(reviews)
     })
 
-@router.get("/<review_id>")
-async def get_product(review_id: str, session: SessionDepAsync):
+@router.get("/{review_id}")
+async def get_product_review(review_id: str, session: SessionDepAsync):
     res = await session.execute(select(SephoraReview).where(SephoraReview.review_id == review_id))
     product = res.scalars().first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return product
+
+@router.get("/product/{product_id}")
+async def get_product_reviews(product_id: str, session: SessionDepAsync):
+    res = await session.execute(select(SephoraReview).where(SephoraReview.product_id == product_id))
+    product = res.scalars().all()
     if not product:
         raise HTTPException(status_code=404, detail="Review not found")
     return product

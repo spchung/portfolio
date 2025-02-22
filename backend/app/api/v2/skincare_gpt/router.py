@@ -26,7 +26,6 @@ async def query_vector(body: ChatRequestBody):
     user_query = body.message
     return await handler.query_vector(user_query)
 
-
 @router.get("/context-snapshot")
 def context_snapshot(session_id: str):
     return handler.get_context_snapshot()
@@ -34,15 +33,3 @@ def context_snapshot(session_id: str):
 @router.get("/last-prompt")
 def last_prompt(session_id: str):
     return handler.get_last_prompt()
-
-# @router.delete("/clear-context-snapshot")
-# async def context_snapshot(session_id: str):
-#     return await clear_context_snapshot(session_id)
-
-# @router.get("/test-classifier")
-# async def product_review(msg: str, context:str=None):
-#     return OpenAIHandler().classify_query_v2(msg, context=context)
-
-# @router.post("/similar-recommendation")
-# async def product_review(product_ids:List[int], body: ChatRequestBody):
-#     pass

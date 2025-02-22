@@ -5,7 +5,6 @@ from app.db.redis import r
 import asyncio, json
 from .interface import I_EcommerceRag
 from app.api.v2.skincare_gpt.classifier.intent_enum import INTENT_ENUM
-from app.api.v2.skincare_gpt.vector_store.qdrant import QdrantStoreService
 from app.core.preprocessing.embedding.open_ai import create_embedding_768
 from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContextManager, ChatHistory
 from app.api.v2.skincare_gpt.classifier.intent_classifier import IntentClassifier
