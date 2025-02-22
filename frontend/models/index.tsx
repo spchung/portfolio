@@ -1,11 +1,11 @@
-
-export type Context = {
-    session_id:  string;
-    history:     History[];
-    window_size: number;
-    metadata:    Metadata;
-    running_summary: string;
+export type ChatContext = {
+    session_id:      string;
+    history:         History[];
+    metadata:        Metadata;
+    running_summary: null;
     last_prompt:     string;
+    product_ids:     string[];
+    review_ids:      string[];
 }
 
 export type History = {
@@ -23,48 +23,51 @@ export type Metadata = {
     last_query_end_time:   number;
     elapsed_seconds:       number;
     last_query_intent:     string;
-    products:              Product[];
-    reviews:               Review[];
 }
 
 export type Product = {
-    parent_asin:    string;
-    main_category:  string;
-    id:             number;
-    average_rating: number;
-    store:          string;
-    features:       string;
-    price:          number | null;
-    details:        Map<string, string>;
-    meta:           null;
-    title:          string;
-    rating_number:  number;
-    description:    string;
-    images:         ProductImage[];
-    categories:     string;
-}
-
-export type ProductImage = {
-    thumb:   string;
-    large:   string;
-    variant: string;
-    hi_res:  null | string;
+    brand_name:         string;
+    product_name:       string;
+    rating:             number;
+    size:               string;
+    price_usd:          number;
+    highlights:         string[];
+    teritary_category:  null;
+    loves_count:        number;
+    brand_id:           number;
+    product_id:         string;
+    reviews:            number;
+    ingredients:        string[];
+    primary_category:   string;
+    secondary_category: string;
 }
 
 export type Review = {
-    asin:        string;
-    title:       string;
-    text:        string;
-    parent_asin: string;
-    timestamp:   string;
-    images:      ReviewImage[];
-    id:          number;
-    user_id:     string;
+    review_id:                string;
+    total_neg_feedback_count: number;
+    hair_color:               string;
+    rating:                   number;
+    total_pos_feedback_count: number;
+    product_id:               string;
+    author_id:                string;
+    submission_time:          Date;
+    product_name:             string;
+    review_text:              string;
+    brand_name:               string;
+    is_recommended:           boolean;
+    review_title:             string;
+    price_usd:                number;
+    skin_tone:                string;
+    helpfulness:              number;
+    eye_color:                string;
+    total_feedback_count:     number;
+    skin_type:                string;
 }
 
-export type ReviewImage = {
-    small_image_url:  string;
-    medium_image_url: string;
-    large_image_url:  string;
-    attachment_type:  string;
+
+export type BatchResponse<T> = {
+    data: T[];
+    meta_data: {
+        total: number;
+    }
 }

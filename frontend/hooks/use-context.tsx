@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { fetchContextSnapshot } from "@/services/context-service";
 import { useRagStore } from "@/stores/use-rag-store";
-import { Context } from "@/models";
-
+import { ChatContext } from "@/models";
 
 export function useContext() {
-    const [context, setContext] = useState<Context>();
+    const [context, setContext] = useState<ChatContext>();
     const state = useRagStore(store => store.state);
     
     useEffect(() => {

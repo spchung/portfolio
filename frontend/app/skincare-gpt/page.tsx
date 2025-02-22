@@ -18,8 +18,8 @@ export default function page() {
     }
 
     return ( 
-        <div className="flex h-full w-full">
-            <div className='flex flex-col w-full'>
+        <div className="flex h-screen max-h-screen w-full overflow-y-auto">
+            <div className='flex flex-col w-full max-h-full'>
                 <div className="w-full bg-gray-200 flex">
                     <SidebarTrigger ref={sideBarTriggerRef} className='hidden'/>
                     <button
@@ -40,7 +40,7 @@ export default function page() {
                     }}> clear context </button>
                     <p className='p-[4px]'> Count: {state.iterateContextCount} - Session ID: {state.sessionId} </p>
                 </div>
-                <div className="flex-1 bg-gray-100 p-4">
+                <div className="flex-1 bg-gray-100 p-4 max-height-[calc(100vh-48px)] overflow-y-auto">
                     <ChatPanel />
                 </div>
             </div>
