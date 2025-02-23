@@ -19,23 +19,33 @@ import {
 const items = [
   {
     title: "SkincareGPT",
-    url: "#",
+    url: "/tools/skincare-gpt",
     icon: Home,
+    isReady: true,
+  },
+  {
+    title: "Langchain Chat",
+    url: "/tools/langchain-chat",
+    icon: Inbox,
+    isReady: true,
   },
   {
     title: "Hugginface Summarizer",
     url: "#",
     icon: Inbox,
+    isReady: false,
   },
   {
     title: "ChatGPT Wrapper",
     url: "#",
     icon: Calendar,
+    isReady: false,
   },
   {
     title: "Chat With Your Papers",
     url: "#",
     icon: Search,
+    isReady: false,
   },
 ]
 
@@ -60,7 +70,7 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <a href={item.isReady ? item.url : '#'} className={`${!item.isReady && 'line-through'}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>

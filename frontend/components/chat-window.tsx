@@ -1,5 +1,5 @@
 import React from "react";
-import { Message } from "@/hooks/use-chat";
+import { Message } from "@/hooks/use-skincaregpt-chat";
 
 interface ChatWindowProps {
   messages: Message[];

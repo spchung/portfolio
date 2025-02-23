@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { fetchChatStream } from "@/services/chat-service";
+import { chatLangChain } from "@/services/chat-service";
 import { useRagStore } from "@/stores/use-rag-store";
 
 export interface Message {
@@ -8,13 +8,12 @@ export interface Message {
 }
 
 
-export function useChat() {
+export function useLangChainChat(threadId: string | null) {
   const [messages, setMessages] = useState<Message[]>([
     { role: "bot", content: "Hello! How can I help you today?" },
   ]);
   const [input, setInput] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const iterateContext = useRagStore((state) => state.iterateContext);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -27,7 +26,7 @@ export function useChat() {
     setMessages((prev) => [...prev, botMessage]);
 
     try {
-      const reader = await fetchChatStream(input);
+      const reader = await chatLangChain(input, threadId);
       if (!reader) throw new Error("No response body");
 
       const decoder = new TextDecoder();
@@ -38,7 +37,6 @@ export function useChat() {
         
         // streaming response ends - call for new context snapshot
         if (done) {
-          iterateContext();
           break;
         }
 
