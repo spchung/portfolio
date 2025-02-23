@@ -10,4 +10,7 @@ class ChatRequestBody(BaseModel):
 
 @router.post("/langchain-chat")
 async def langchain_chat(body: ChatRequestBody, thread_id: str=None):
+    '''
+    Based on https://python.langchain.com/docs/tutorials/chatbot/
+    '''
     return StreamingResponse(chat(body.message, thread_id), media_type="text/event-stream")
