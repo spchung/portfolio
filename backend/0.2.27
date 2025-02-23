@@ -1,0 +1,22 @@
+Using version ^0.3.37 for langchain-core
+Using version ^0.2.74 for langgraph
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 12 installs, 0 updates, 0 removals
+
+  - Installing jsonpointer (3.0.0)
+  - Installing orjson (3.10.15)
+  - Installing requests-toolbelt (1.0.0)
+  - Installing zstandard (0.23.0)
+  - Installing jsonpatch (1.33)
+  - Installing langsmith (0.3.10)
+  - Installing tenacity (9.0.0)
+  - Installing langchain-core (0.3.37)
+  - Installing msgpack (1.1.0)
+  - Installing langgraph-checkpoint (2.0.16)
+  - Installing langgraph-sdk (0.1.53)
+  - Installing langgraph (0.2.74)
+
+Writing lock file

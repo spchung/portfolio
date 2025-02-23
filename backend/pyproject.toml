@@ -25,6 +25,9 @@ asyncpg = "^0.30.0"
 redis = "^5.2.1"
 qdrant-client = {extras = ["fastembed"], version = "^1.13.2"}
 sentence-transformers = "^3.4.1"
+langchain-core = "^0.3.37"
+langgraph = "^0.2.74"
+langchain = {extras = ["openai"], version = "^0.3.19"}
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
