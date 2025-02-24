@@ -1,6 +1,6 @@
 "use client";
 import { useSkincareGPTChat } from "@/hooks/use-skincaregpt-chat";
-import { useLangChainChat } from "@/hooks/use-langchain-chat";
+import { LangChainChatConfig, useLangChainChat } from "@/hooks/use-langchain-chat";
 import ChatWindow from "@/components/chat-window";
 import ChatInput from "@/components/chat-input";
 
@@ -12,7 +12,10 @@ const ChatPanel = () => {
     sendMessage,
     messagesEndRef,
     // TODO: thread manager for langchain
-  } = useLangChainChat('test-thread-id');
+  } = useLangChainChat({
+    threadId: "test-thread",
+    initMessage: "Hi welcome to chilli's!"
+  } as LangChainChatConfig);
 
   return (
     <div className="flex flex-col bg-gray-100 p-4 max-w-full w-full h-full overflow-y-auto">

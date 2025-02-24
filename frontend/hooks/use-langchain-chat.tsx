@@ -7,10 +7,17 @@ export interface Message {
   content: string;
 }
 
+export interface LangChainChatConfig {
+    threadId: string | null;
+    initMessage: string;
+  }
 
-export function useLangChainChat(threadId: string | null) {
+export function useLangChainChat({
+    threadId='123abc',
+    initMessage="Hello! How can I help you today?"
+}:LangChainChatConfig) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "bot", content: "Hello! How can I help you today?" },
+    { role: "bot", content: initMessage },
   ]);
   const [input, setInput] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);

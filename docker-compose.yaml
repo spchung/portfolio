@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL
   postgres:
     container_name: postgres
     image: postgres:15-alpine
