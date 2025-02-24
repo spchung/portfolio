@@ -67,5 +67,4 @@ class IntentClassifier:
 
         # print(response)
         res = response.choices[0].message.content.strip()
-        print(res)
         return INTENT_ENUM(res), prompt

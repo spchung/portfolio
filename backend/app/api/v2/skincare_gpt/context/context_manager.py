@@ -1,37 +1,12 @@
-from pydantic import BaseModel
 from typing import List
-from datetime import datetime as dt
-from app.models.pg.product import Product
-from app.models.pg.review import Review
+from app.models.api.context import ChatHistory, MetaData
 from openai import OpenAI
+from app.db.redis import r
+from datetime import datetime as dt
 import json
 
 import dotenv
 dotenv.load_dotenv()
-
-class ChatHistory(BaseModel):
-    user_query: str | None = None
-    response: str | None = None
-    user_intent: str | None = None
-    topic: str | None = None # could be product name, or category name
-    timestamp: float | None = None
-    struct_data: dict | None = None # for any structured data as additional context
-
-    def serialize(self):
-        return self.model_dump_json()
-    
-    def complete(self):
-        self.timestamp = dt.now().timestamp()
-    
-class MetaData(BaseModel):
-    last_response_tokens: int = 0
-    last_query_start_time: float | None = None
-    last_query_end_time: float | None = None
-    elapsed_seconds: float = 0
-    last_query_intent: str | None = None
-
-    def serialize(self):
-        return self.model_dump_json()
 
 class RunningSummaryManager():
     def __init__(self, k: int = 3, windowSize: int = 5):
@@ -94,13 +69,12 @@ class RunningSummaryManager():
 
         summary = response.choices[0].message.content.strip()
         self.running_summary = summary
-        print(summary)
         return summary
     
     def __repr__(self):
         return self.running_summary
-    
-class SkincareGPTContextManager():
+
+class SkincareGPTContext:
     def __init__(self, session_id: str, window_size: int = 5, k_chat_size: int = 3):
         self.session_id = session_id
         self.history = []
@@ -112,10 +86,29 @@ class SkincareGPTContextManager():
         self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
         self.product_ids = [] 
         self.review_ids = []
+        # self.user_preferences = UserPreferences()
+    
+    @staticmethod
+    def load(context_json: str):
+        context_json = json.loads(context_json)
+        k_chat_size = context_json['k_chat_size']
+        window_size = context_json['window_size']
+
+        context = SkincareGPTContext(context_json['session_id'], window_size, k_chat_size)
+        context.history = [ChatHistory(**history) for history in context_json['history']]
+        context.metadata = MetaData(**context_json['metadata'])
+        context.running_summary = context_json['running_summary']
+        context.last_prompt = context_json['last_prompt']
+        context.product_ids = context_json['product_ids']
+        context.review_ids = context_json['review_ids']
+        return context
+        
 
     def serialize(self):
         return json.dumps({
             "session_id": self.session_id,
+            'window_size': self.window_size,
+            'k_chat_size': self.k_chat_size,
             "history": [history.model_dump() for history in self.history],
             "metadata": self.metadata.model_dump(),
             "running_summary": self.running_summary,
@@ -156,3 +149,45 @@ class SkincareGPTContextManager():
             context.append(chat.user_query)
             context.append(chat.response)
         return "\n".join(context)
+
+class SkincareGPTContextManager:
+    def __init__(self, limit = 3):
+        self.pool = {} # session_id: SkincareGPTContext
+        self.count = 0
+        self.limit = limit
+        self.ordered_keys = [] # List[session_id] ordered by last used - descending (-1 is the most recent)
+
+    def register_activity(self, context: SkincareGPTContext) -> None:
+        if context.session_id in self.pool:
+            self.ordered_keys.remove(context.session_id)
+            self.ordered_keys.append(context.session_id)
+            return 
+        
+        if self.count >= self.limit:
+            key = self.ordered_keys.pop(0)
+            del self.pool[key]
+            self.pool[context.session_id] = context
+            self.ordered_keys.append(context.session_id)
+        else:
+            self.count += 1
+            self.pool[context.session_id] = context
+            self.ordered_keys.append(context.session_id)
+        
+    def remove_from_pool(self, context: SkincareGPTContext) -> None:
+        del self.pool[context.session_id]
+        self.ordered_keys.remove(context.session_id)
+        self.count -= 1
+
+    def get_context(self, session_id: str) -> SkincareGPTContext:
+        if session_id in self.pool:
+            context = self.pool[session_id]
+            self.register_activity(context)
+            return context
+
+        context_json = r.get(session_id)
+        if context_json:
+            context = SkincareGPTContext.load(context_json)
+        else:
+            context = SkincareGPTContext(session_id)
+        self.register_activity(context)
+        return context

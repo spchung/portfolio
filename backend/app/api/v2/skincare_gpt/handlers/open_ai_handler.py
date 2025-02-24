@@ -6,7 +6,7 @@ import asyncio, json
 from .interface import I_EcommerceRag
 from app.api.v2.skincare_gpt.classifier.intent_enum import INTENT_ENUM
 from app.core.preprocessing.embedding.open_ai import create_embedding_768
-from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContextManager, ChatHistory
+from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContext, ChatHistory, SkincareGPTContextManager
 from app.api.v2.skincare_gpt.classifier.intent_classifier import IntentClassifier
 from app.db.postgres import async_engine
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,26 +17,34 @@ from app.models.pg.sephora import SephoraProduct, SephoraReview
 import dotenv
 dotenv.load_dotenv()
 
+context_manager = SkincareGPTContextManager()
+
 class OpenAIHandler():
-    def __init__(self, model="chatgpt-4o-latest"):
+    def __init__(self, session_id: str, model="chatgpt-4o-latest"):
         self.client = OpenAI()
         self.model = model
         self.qdrant_client = QdrantClient(url="http://localhost:6333")
-        self.llm_ctx_mgr = SkincareGPTContextManager('test-session')
-        self.intent_classifier = IntentClassifier(self.llm_ctx_mgr)
+        self.llm_ctx = context_manager.get_context(session_id)
+        self.intent_classifier = IntentClassifier(self.llm_ctx)
 
     def query_vector(self, query):
         res = self.qdrant.search(query)
         return res
     
+    def new_session(self, session_id):
+        ### Greet and ask for skin type
+        pass
+
     # main chat function
-    async def chat(self, query):
+    async def chat(self, query, session_id=None):
+        print(f"[LOG]: Chatting - {query} --> {session_id}")
+
         # 0. begin 
-        self.llm_ctx_mgr.start_response()
+        self.llm_ctx.start_response()
         
         # 1. classify intent
         intent, cls_prompt = self.intent_classifier.classify(query)
-        self.llm_ctx_mgr.last_prompt = cls_prompt
+        self.llm_ctx.last_prompt = cls_prompt
 
         # start chat history
         chat_history = ChatHistory()
@@ -66,11 +74,11 @@ class OpenAIHandler():
         # log total token
         chat_history.complete()
 
-        self.llm_ctx_mgr.end_response(token_count=total_response_tokens)
-        self.llm_ctx_mgr.add_chat_history(chat_history)
-        self.llm_ctx_mgr.metadata.last_query_intent = intent.value
+        self.llm_ctx.end_response(token_count=total_response_tokens)
+        self.llm_ctx.add_chat_history(chat_history)
+        self.llm_ctx.metadata.last_query_intent = intent.value
 
-        r.set(self.llm_ctx_mgr.session_id, self.llm_ctx_mgr.serialize())
+        r.set(self.llm_ctx.session_id, self.llm_ctx.serialize())
     
     def create_completions(self, user_query: str, stream=False, temperature = 0.5):
         response = self.client.chat.completions.create(
@@ -84,7 +92,7 @@ class OpenAIHandler():
 
     def get_context_snapshot(self):
         try:
-            json_string = r.get(self.llm_ctx_mgr.session_id)
+            json_string = r.get(self.llm_ctx.session_id)
             return json.loads(json_string)
         except Exception as e:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -137,7 +145,7 @@ class OpenAIHandler():
             ingredients.update(p.ingredients)
         
         # context operations
-        self.llm_ctx_mgr.set_product_ids([p.product_id for p in  products])
+        self.llm_ctx.set_product_ids([p.product_id for p in  products])
 
         # 3. PROMPT FOR REWRITE
         response = await self.llm_rewrite(
@@ -202,8 +210,8 @@ class OpenAIHandler():
             ingredients.update(p.ingredients)
 
         # context operations
-        self.llm_ctx_mgr.set_product_ids([p.product_id for p in  products])
-        self.llm_ctx_mgr.set_reviews([r.review_id for r in reviews])
+        self.llm_ctx.set_product_ids([p.product_id for p in  products])
+        self.llm_ctx.set_reviews([r.review_id for r in reviews])
 
         # 4. PROMPT FOR REWRITE
         response = await self.llm_rewrite(
