@@ -6,15 +6,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton"
 
-const queryClient = new QueryClient();
-
 interface EntityPanelProps extends React.ComponentPropsWithoutRef<"div"> {
     productIds: string[] | undefined;
     reviewIds: string[] | undefined;
 }
 
 /* Render reviews or products or both */
-function EntityList({ productIds, reviewIds}: EntityPanelProps) {
+function EntityPanel({ productIds, reviewIds}: EntityPanelProps) {
     const { isPending: productIsPending, error: productHasError, data: productData, isFetching } = useQuery({
         queryKey: ['productIds', productIds],
         queryFn: () => fetchBatchProducts(productIds || []),
@@ -28,32 +26,26 @@ function EntityList({ productIds, reviewIds}: EntityPanelProps) {
       })
     
     if (productIsPending) return (
-        <div className='flex flex-col'>
-            <Skeleton className='h-20' />
-            <Skeleton className='h-20' />
-            <Skeleton className='h-20' />
+        <div className='h-full bg-gray-100'>
+            <div className='flex flex-col gap-2'>
+                <Skeleton className='h-20' />
+                <Skeleton className='h-20' />
+                <Skeleton className='h-20' />
+            </div>
+
         </div>
     )
 
     if (productHasError) return 'An error has occurred: ' + productHasError.message
 
     return (
-        <div className='flex flex-col'>
+        <div className='flex flex-col h-full bg-gray-100 rounded-lg justify-start p-2'>
             {productData.data.map((product) => (
-                <div className='mb-1' key={product.product_id}>
+                <div className='px-2 py-1' key={product.product_id}>
                     <ProductCard product={product} reviews={reviewData?.data}/>
                 </div>
             ))}
         </div>
-    );
-}
-
-
-function EntityPanel({ productIds, reviewIds }: EntityPanelProps) {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <EntityList productIds={productIds} reviewIds={reviewIds} />
-        </QueryClientProvider>
     );
 }
 

@@ -2,7 +2,7 @@ export type ChatContext = {
     session_id:      string;
     history:         History[];
     metadata:        Metadata;
-    running_summary: null;
+    running_summary: string;
     last_prompt:     string;
     product_ids:     string[];
     review_ids:      string[];

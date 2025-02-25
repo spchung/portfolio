@@ -87,7 +87,6 @@ class SkincareGPTContext:
         self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
         self.product_ids = [] 
         self.review_ids = []
-        # self.user_preferences = UserPreferences()
     
     @staticmethod
     def load(context_json: str):
@@ -103,7 +102,19 @@ class SkincareGPTContext:
         context.product_ids = context_json['product_ids']
         context.review_ids = context_json['review_ids']
         return context
-        
+    
+    def model_dump(self):
+        return {
+            "session_id": self.session_id,
+            'window_size': self.window_size,
+            'k_chat_size': self.k_chat_size,
+            "history": [history.model_dump() for history in self.history],
+            "metadata": self.metadata.model_dump(),
+            "running_summary": self.running_summary,
+            "last_prompt": self.last_prompt,
+            "product_ids": self.product_ids,
+            "review_ids": self.review_ids
+        }
 
     def serialize(self):
         return json.dumps({

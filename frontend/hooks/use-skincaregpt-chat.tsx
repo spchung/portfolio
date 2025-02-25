@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { chatSkincareGPT } from "@/services/chat-service";
 import { useRagStore } from "@/stores/use-rag-store";
 
@@ -7,14 +7,25 @@ export interface Message {
   content: string;
 }
 
-
 export function useSkincareGPTChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "bot", content: "Hello! How can I help you today?" },
-  ]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [input, setInput] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const iterateContext = useRagStore((state) => state.iterateContext);
+  const iterateContext = useRagStore((store) => store.iterateContext);
+  const ragState = useRagStore((store) => store.state);
+  
+  useEffect(() => {
+    if (!ragState.sessionId) return;
+    
+
+    
+  }, [ragState.sessionId]);
+
+
+  const [messages, setMessages] = useState<Message[]>([
+    { role: "bot", content: `Hello! How can I help you today? - ${ragState.sessionId}` },
+  ]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -27,7 +38,7 @@ export function useSkincareGPTChat() {
     setMessages((prev) => [...prev, botMessage]);
 
     try {
-      const reader = await chatSkincareGPT(input);
+      const reader = await chatSkincareGPT(input, ragState.sessionId);
       if (!reader) throw new Error("No response body");
 
       const decoder = new TextDecoder();

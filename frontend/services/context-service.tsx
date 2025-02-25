@@ -21,7 +21,7 @@ export async function deleteContext(sessionId: string) {
 }
 
 export function getNewSessionId() {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v2/skincare-gpt/register-new-session`, {
+    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v2/skincare-gpt/new-session`, {
         method: "GET",
         credentials: "include",
     }).then((response) => response.json());

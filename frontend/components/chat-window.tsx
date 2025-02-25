@@ -12,13 +12,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, messagesEndRef }) => 
       {messages.map((msg, index) => (
         <div
           key={index}
-          className={`p-3 rounded-lg max-w-xs ${
-            msg.role === "user"
-              ? "bg-blue-500 text-white ml-auto"
-              : "bg-gray-200 text-gray-900"
+          className={`flex ${
+            msg.role === "user" ? "justify-end" : "justify-start"
           }`}
         >
-          {msg.content}
+          <div
+            className={`p-3 rounded-lg w-fit ${
+              msg.role === "user"
+                ? "bg-blue-500 text-white max-w-sm"
+                : "bg-gray-200 text-gray-900 max-w-xl"
+            }`}
+          >
+            {msg.content}
+          </div>
         </div>
       ))}
       <div ref={messagesEndRef} />

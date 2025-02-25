@@ -20,8 +20,7 @@ dotenv.load_dotenv()
 context_manager = SkincareGPTContextManager()
 
 class OpenAIHandler():
-    def __init__(self, session_id: str | None, model="chatgpt-4o-latest"):
-
+    def __init__(self, session_id, model="chatgpt-4o-latest"):
         # generate new session_id if not provided
         if not session_id:
             self.session_id = context_manager.generate_session_id()
@@ -38,14 +37,8 @@ class OpenAIHandler():
         res = self.qdrant.search(query)
         return res
     
-    def new_session(self, session_id):
-        ### Greet and ask for skin type
-        pass
-
     # main chat function
     async def chat(self, query, session_id=None):
-        print(f"[LOG]: Chatting - {query} --> {session_id}")
-
         # 0. begin 
         self.llm_ctx.start_response()
         

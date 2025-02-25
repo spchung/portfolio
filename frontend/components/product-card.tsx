@@ -23,6 +23,8 @@ export function ProductCard({ product, reviews, className }: ProductCardProps) {
         secondary_category,
     } = product;
 
+    console.log(reviews?.length);
+
     const [productReviewMap, setProductReviewMap] = useState(new Map<string, Review[]>(null));
 
     useEffect(() => {
@@ -40,7 +42,7 @@ export function ProductCard({ product, reviews, className }: ProductCardProps) {
     }, [reviews]);
 
     return (
-        <div className={cn("flex flex-row bg-gray-100 border rounded-lg shadow-sm overflow-hidden text-ellipsis", className)}>
+        <div className={cn("flex flex-row bg-white border rounded-lg shadow-sm overflow-hidden text-ellipsis", className)}>
             <ProductOverview 
                 productId={product_id}
                 title={product_name} 

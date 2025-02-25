@@ -8,14 +8,13 @@ interface IconProps extends React.ComponentPropsWithoutRef<'svg'> {
 }
 
 const SkinCareIcon = ({ type, width=30, height=30 } : IconProps) => {
-
     var source;
     switch (type) {
         case 'Moisturizers':
             source = '/icons/cream.png';
             break;
         case 'Sunscreen':
-            source = '/icon/sunscreen.png';
+            source = '/icons/sunscreen.png';
             break;
         case 'Treatments':
             source = '/icons/treatment.png';

@@ -13,7 +13,7 @@ interface StoreState {
 
 export const useRagStore = create<StoreState>((set, get) => ({
     state: {
-        sessionId: 'test',
+        sessionId: '',
         iterateContextCount: 0
     },
     setSessionId: (sessionId: string) => set((store) => ({ 
