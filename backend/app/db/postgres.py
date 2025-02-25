@@ -1,9 +1,8 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from typing import Annotated
-from fastapi import Depends, FastAPI, HTTPException, Query
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from fastapi import Depends
+from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession

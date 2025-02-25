@@ -20,7 +20,6 @@ torch = "^2.5.1"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
 sqlmodel = "^0.0.22"
 psycopg2 = "^2.9.10"
-pymilvus = "^2.5.4"
 asyncpg = "^0.30.0"
 redis = "^5.2.1"
 qdrant-client = {extras = ["fastembed"], version = "^1.13.2"}
