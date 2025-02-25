@@ -1,16 +1,12 @@
-'use client';
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { useSidebarStore } from "@/stores/use-sidebar-store"
-
-export default function Layout({ children }: { children: React.ReactNode }) {
-  const { isOpen } = useSidebarStore((state) => state.state);
+import { SideBarWrapper } from './sidebar-wrapper';
+import { cookies } from 'next/headers'
+ 
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies()
+  const sessionId = cookieStore.get('session_id')
   return (
-    <SidebarProvider open={isOpen}>
-      <AppSidebar />
-      <main className='w-full'>
-        {children}
-      </main>
-    </SidebarProvider>
-  )
+    <SideBarWrapper sessionId={sessionId?.value}>
+      {children}
+    </SideBarWrapper>
+  );
 }

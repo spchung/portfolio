@@ -4,6 +4,7 @@ from openai import OpenAI
 from app.db.redis import r
 from datetime import datetime as dt
 import json
+from uuid import uuid4
 
 import dotenv
 dotenv.load_dotenv()
@@ -156,6 +157,9 @@ class SkincareGPTContextManager:
         self.count = 0
         self.limit = limit
         self.ordered_keys = [] # List[session_id] ordered by last used - descending (-1 is the most recent)
+
+    def generate_session_id(self) -> str:
+        return str(uuid4())
 
     def register_activity(self, context: SkincareGPTContext) -> None:
         if context.session_id in self.pool:

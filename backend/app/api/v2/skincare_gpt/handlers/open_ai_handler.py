@@ -20,11 +20,18 @@ dotenv.load_dotenv()
 context_manager = SkincareGPTContextManager()
 
 class OpenAIHandler():
-    def __init__(self, session_id: str, model="chatgpt-4o-latest"):
+    def __init__(self, session_id: str | None, model="chatgpt-4o-latest"):
+
+        # generate new session_id if not provided
+        if not session_id:
+            self.session_id = context_manager.generate_session_id()
+        else: 
+            self.session_id = session_id
+
         self.client = OpenAI()
         self.model = model
         self.qdrant_client = QdrantClient(url="http://localhost:6333")
-        self.llm_ctx = context_manager.get_context(session_id)
+        self.llm_ctx = context_manager.get_context(self.session_id)
         self.intent_classifier = IntentClassifier(self.llm_ctx)
 
     def query_vector(self, query):

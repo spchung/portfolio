@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatPanel from './chat-panel';
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -8,18 +8,39 @@ import DevPanel from './dev-panel';
 import { useRagStore } from "@/stores/use-rag-store";
 import { Monomaniac_One } from "next/font/google";
 import { useSidebarStore } from '@/stores/use-sidebar-store';
+import { getNewSessionId } from '@/services/context-service';
+
 
 const monomanic = Monomaniac_One({ subsets: ["latin"], weight: "400" });
 
+function getCookie(key: string) {
+    const cookie = document.cookie;
+    console.log("cookie", cookie);
+    const value = `; ${cookie}`;
+    const parts = value.split(`; ${key}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift();
+  }
+
 export default function page() {
-    const { state, setSessionId, iterateContext } = useRagStore();
     const [devPanelIsOpen, setIsOpenDevPanel] = useState(false);
     const sideBarTriggerRef = useRef<HTMLButtonElement>(null);
     const { toggle, state: sidebarState} = useSidebarStore();
-    
-    if (!state.sessionId) {
-        setSessionId('test');
-    }
+    const [sessionId, setSessionId] = useState('');
+
+    useEffect(() => {
+        console.log("useEffect");
+        if (typeof document !== 'undefined') {
+            const sessionId = getCookie('session_id');
+            if (sessionId) {
+                setSessionId(sessionId);
+            }
+            else {
+                getNewSessionId().then((response) => {
+                    setSessionId(response.sessionId);
+                });
+            }
+        }
+    },[]);
 
     return ( 
         <div className={`flex h-screen max-h-screen w-full overflow-y-auto`}>
@@ -37,12 +58,7 @@ export default function page() {
                     >
                         { devPanelIsOpen ? <AiFillEyeInvisible className='text-gray-700 h-6 w-6'/> : <AiFillEye className='text-gray-700 h-6 w-6'/> }
                     </button>
-                    <h2 className={`${monomanic.className} text-2xl font-bold text-gray-700 p-3`}>SkincareGPT</h2>
-                    {/* <button onClick={ () => {
-                        deleteContext(state.sessionId);
-                        iterateContext();
-                    }}> clear context </button> */}
-                    {/* <p className='p-[4px]'> Count: {state.iterateContextCount} - Session ID: {state.sessionId} </p> */}
+                    <h2 className={`${monomanic.className} text-2xl font-bold text-gray-700 p-3`}>SkincareGPT - {sessionId}</h2>
                 </div>
                 <div className="flex-1 bg-gray-100 p-4 max-height-[calc(100vh-48px)] overflow-y-auto">
                     <ChatPanel />
