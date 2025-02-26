@@ -15,7 +15,7 @@ export default function DevPanel() {
       <div className='flex-1'>
         <EntityPanel productIds={product_ids} reviewIds={review_ids} />
       </div>
-      <div className='flex-1'> 
+      <div className='flex-1 overflow-y-auto'> 
         <ContextPael context={context} />
       </div>
     </div>

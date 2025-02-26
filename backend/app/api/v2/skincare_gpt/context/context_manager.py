@@ -1,5 +1,5 @@
 from typing import List
-from app.models.api.context import ChatHistory, MetaData
+from app.models.api.context import ChatHistory, MetaData, NamedEntity
 from openai import OpenAI
 from app.db.redis import r
 from datetime import datetime as dt
@@ -87,20 +87,22 @@ class SkincareGPTContext:
         self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
         self.product_ids = [] 
         self.review_ids = []
+        self.named_entities = []
     
     @staticmethod
     def load(context_json: str):
-        context_json = json.loads(context_json)
-        k_chat_size = context_json['k_chat_size']
-        window_size = context_json['window_size']
+        context_dict = json.loads(context_json)
+        k_chat_size = context_dict['k_chat_size']
+        window_size = context_dict['window_size']
 
-        context = SkincareGPTContext(context_json['session_id'], window_size, k_chat_size)
-        context.history = [ChatHistory(**history) for history in context_json['history']]
-        context.metadata = MetaData(**context_json['metadata'])
-        context.running_summary = context_json['running_summary']
-        context.last_prompt = context_json['last_prompt']
-        context.product_ids = context_json['product_ids']
-        context.review_ids = context_json['review_ids']
+        context = SkincareGPTContext(context_dict['session_id'], window_size, k_chat_size)
+        context.history = [ChatHistory(**history) for history in context_dict['history']]
+        context.metadata = MetaData(**context_dict['metadata'])
+        context.running_summary = context_dict['running_summary']
+        context.last_prompt = context_dict['last_prompt']
+        context.product_ids = context_dict['product_ids']
+        context.review_ids = context_dict['review_ids']
+        context.named_entities = [NamedEntity(**entity) for entity in context_dict['named_entities']]
         return context
     
     def model_dump(self):
@@ -113,7 +115,8 @@ class SkincareGPTContext:
             "running_summary": self.running_summary,
             "last_prompt": self.last_prompt,
             "product_ids": self.product_ids,
-            "review_ids": self.review_ids
+            "review_ids": self.review_ids,
+            'named_entities': [entity.model_dump() for entity in self.named_entities]
         }
 
     def serialize(self):
@@ -126,7 +129,8 @@ class SkincareGPTContext:
             "running_summary": self.running_summary,
             "last_prompt": self.last_prompt,
             "product_ids": self.product_ids,
-            "review_ids": self.review_ids
+            "review_ids": self.review_ids,
+            "named_entities": [entity.model_dump() for entity in self.named_entities]
         })
     
     ## metadata methods
@@ -137,6 +141,19 @@ class SkincareGPTContext:
         self.metadata.last_query_end_time = dt.now().timestamp()
         self.metadata.elapsed_seconds = self.metadata.last_query_end_time - self.metadata.last_query_start_time
         self.metadata.last_response_tokens = token_count
+
+    ## NER methods
+    def register_named_entities(self, entities: dict) -> None:
+        lis = []
+        for key, ent_lis in entities.items():
+            for data in ent_lis:
+                entity = NamedEntity(label=key, text=data.get('text', ''))
+                lis.append(entity)
+
+        # if not exists, append
+        for entity in lis:
+            if entity not in self.named_entities:
+                self.named_entities.append(entity)
 
     ## context methods
     def set_product_ids(self, product_ids: List[str]) -> None:

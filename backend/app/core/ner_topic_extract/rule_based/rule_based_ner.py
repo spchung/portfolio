@@ -91,8 +91,8 @@ def filter_overlapping_spans(spans: List[Span]) -> List[Span]:
     # Define category priorities (lower number = higher priority)
     priority = {
         "SKIN_CONDITION": 1, 
-        "PRODUCT_INGREDIENT": 2,
-        "SKIN_DESCRIPTION": 3, 
+        "SKIN_DESCRIPTION": 2, 
+        "PRODUCT_INGREDIENT": 3,
         "BODY_PART": 4, 
     }
     
@@ -118,7 +118,7 @@ def filter_overlapping_spans(spans: List[Span]) -> List[Span]:
     return filtered
 
 ### MAIN FUNCTION ###
-def tag(text: str) -> Tuple[spacy.tokens.Doc, Dict]:
+def rule_based_tag(text: str) -> Tuple[spacy.tokens.Doc, Dict]:
     """
     Tag skin conditions, descriptions, and related terms in text.
     
@@ -135,13 +135,12 @@ def tag(text: str) -> Tuple[spacy.tokens.Doc, Dict]:
     # Organize entities by category
     results = {
         "SKIN_CONDITION": [],
-        "DESCRIPTION": [],
+        "SKIN_DESCRIPTION": [],
         "BODY_PART": [],
         "PRODUCT_INGREDIENT": []
     }
     
     for ent in doc.ents:
-        print(ent.label_)
         if ent.label_ in results:
             results[ent.label_].append({
                 "text": ent.text,

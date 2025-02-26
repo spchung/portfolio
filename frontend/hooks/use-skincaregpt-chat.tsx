@@ -23,7 +23,6 @@ export function useSkincareGPTChat() {
         const initChatHistory = async () => {
             if (sessionId) {
                 try {
-
                     // get context snapshot
                     const response = await fetchContextSnapshot(sessionId);
                     const chatHistory = response.history as History[];

@@ -6,6 +6,12 @@ export type ChatContext = {
     last_prompt:     string;
     product_ids:     string[];
     review_ids:      string[];
+    named_entities:  NamedEntity[];
+}
+
+export type NamedEntity = {
+    label: string;
+    text: string;
 }
 
 export type History = {

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from qdrant_client import QdrantClient, models
 from app.models.pg.sephora import SephoraProduct, SephoraReview
+from app.core.ner_topic_extract.rule_based.rule_based_ner import rule_based_tag
 
 import dotenv
 dotenv.load_dotenv()
@@ -45,6 +46,10 @@ class OpenAIHandler():
         # 1. classify intent
         intent, cls_prompt = self.intent_classifier.classify(query)
         self.llm_ctx.last_prompt = cls_prompt
+
+        # 2. NER
+        _, entities = rule_based_tag(query)
+        self.llm_ctx.register_named_entities(entities)
 
         # start chat history
         chat_history = ChatHistory()
