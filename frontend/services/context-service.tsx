@@ -5,10 +5,10 @@ export async function fetchContextSnapshot(sessionId: string) {
         headers: { "Content-Type": "application/json" },
     });
 
-    if (response.status === 404) return null;
-
+    if (response.status === 404) throw new Error("Context not found");
     if (!response.body) throw new Error("No response body");
-    return response.json();
+
+    return await response.json();
 }
 
 export async function deleteContext(sessionId: string) {

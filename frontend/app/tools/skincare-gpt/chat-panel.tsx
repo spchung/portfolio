@@ -11,11 +11,12 @@ const ChatPanel: React.FC = () => {
     setInput,
     sendMessage,
     messagesEndRef,
+    isInitialized,
   } = useSkincareGPTChat();
 
   return (
     <div className="flex flex-col bg-gray-100 p-4 max-w-full w-full h-full overflow-y-auto">
-      <ChatWindow messages={messages} messagesEndRef={messagesEndRef} />
+      <ChatWindow messages={messages} messagesEndRef={messagesEndRef} isInitialized={isInitialized}/>
       <ChatInput input={input} setInput={setInput} sendMessage={sendMessage} />
     </div>
   );
