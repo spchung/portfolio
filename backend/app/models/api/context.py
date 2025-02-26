@@ -8,12 +8,6 @@ class MetaData(BaseModel):
     last_query_end_time: float | None = None
     elapsed_seconds: float = 0
     last_query_intent: str | None = None
-
-class RedisSessionModel(BaseModel):
-    session_id: str
-    history: List[dict]
-    metadate: MetaData
-    
 class ChatHistory(BaseModel):
     user_query: str | None = None
     response: str | None = None
@@ -27,4 +21,17 @@ class ChatHistory(BaseModel):
 
 class UserPreferences(BaseModel):
     skin_type: str | None = None
-    skin_concerns: List[str] | None = None
+    concerns: List[str] | None = None
+
+class Topics(BaseModel):
+    topic: str
+    confidence: float
+    mentioned_at: int
+    attributes: List[str]
+
+class RedisSessionModel(BaseModel):
+    session_id: str
+    history: List[dict] = []
+    metadate: MetaData = MetaData()
+    topics: List[Topics] = []
+    user_preferences: UserPreferences = UserPreferences()

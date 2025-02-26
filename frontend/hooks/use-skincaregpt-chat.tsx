@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, use } from "react";
 import { chatSkincareGPT } from "@/services/chat-service";
 import { useRagStore } from "@/stores/use-rag-store";
 import { fetchContextSnapshot } from "@/services/context-service";
-import { threadId } from "worker_threads";
 import { History } from "@/models";
 
 export interface Message {

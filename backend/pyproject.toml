@@ -6,7 +6,7 @@ authors = ["stephen <chung25stephen@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12,<3.13"
 openai = "^1.59.9"
 python-dotenv = "^1.0.1"
 fastapi = {extras = ["standard"], version = "^0.115.6"}
@@ -29,6 +29,9 @@ langgraph = "^0.2.74"
 langchain = {extras = ["openai"], version = "^0.3.19"}
 pytest = "^8.3.4"
 httpx = "^0.28.1"
+spicy = "^0.16.0"
+matplotlib = "^3.10.0"
+spacy = "^3.8.4"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
