@@ -2,17 +2,9 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import re
 
-def fuzzy_search(query, dictionary, threshold=70):
+def fuzzy_search(query, dictionary, threshold=80):
     """
     Performs fuzzy search on a dictionary of terms, handling both single and multi-token queries.
-    
-    Args:
-        query (str): The search query from the user
-        dictionary (list): List of terms to search against
-        threshold (int): Minimum similarity score (0-100) to consider a match
-        
-    Returns:
-        list: List of tuples (matched_term, score, match_type) sorted by score in descending order
     """
     # Clean and tokenize the query
     query = query.lower().strip()
@@ -28,10 +20,11 @@ def fuzzy_search(query, dictionary, threshold=70):
             dictionary, 
             scorer=fuzz.ratio, 
             score_cutoff=threshold,
-            limit=5
+            limit=1
         )
         for match, score in matches:
-            results.append((match, score, 'single_token'))
+            if int(score) >= threshold:
+                results.append((match, score, 'single_token'))
     
     # Case 2: Multi-token query
     else:
@@ -41,7 +34,7 @@ def fuzzy_search(query, dictionary, threshold=70):
             dictionary, 
             scorer=fuzz.token_set_ratio, 
             score_cutoff=threshold,
-            limit=5
+            limit=1
         )
         for match, score in token_set_matches:
             results.append((match, score, 'token_set'))
@@ -52,7 +45,7 @@ def fuzzy_search(query, dictionary, threshold=70):
             dictionary, 
             scorer=fuzz.token_sort_ratio, 
             score_cutoff=threshold,
-            limit=5
+            limit=1
         )
         for match, score in token_sort_matches:
             # Only add if not already in results with a higher score
@@ -81,6 +74,8 @@ def fuzzy_search(query, dictionary, threshold=70):
         if match not in unique_results or score > unique_results[match][0]:
             unique_results[match] = (score, match_type)
     
+    # print(unique_results)
+
     # Return sorted results
     sorted_results = [(term, score) 
                       for term, (score, _) in unique_results.items()]

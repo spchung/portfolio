@@ -23,8 +23,6 @@ export function ProductCard({ product, reviews, className }: ProductCardProps) {
         secondary_category,
     } = product;
 
-    console.log(reviews?.length);
-
     const [productReviewMap, setProductReviewMap] = useState(new Map<string, Review[]>(null));
 
     useEffect(() => {

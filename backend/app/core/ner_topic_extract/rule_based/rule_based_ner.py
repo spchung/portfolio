@@ -20,7 +20,6 @@ def get_ner_entities():
             entity_dict[entity.key] = entity.values
     return entity_dict
 
-
 entities = get_ner_entities()
 
 def setup_skin_condition_tagger():
@@ -49,6 +48,8 @@ def skincare_gpt_tagger(doc, stop_words):
 
     # filter stop words
     token_indices = [i for i, token in enumerate(doc) if not token.text in stop_words]
+    # filter punctuation
+    token_indices = [i for i in token_indices if not doc[i].is_punct]
 
     # Process each token in the document
     for token_idx in token_indices:
@@ -56,7 +57,7 @@ def skincare_gpt_tagger(doc, stop_words):
 
         # Check if token or token span matches any of our custom terms
         for category, terms in entities.items():
-            results = fuzzy_search(token.text.lower(), terms, threshold=70)
+            results = fuzzy_search(token.text.lower(), terms, threshold=85)
 
             # only allow one match per token
             if results:
@@ -64,7 +65,7 @@ def skincare_gpt_tagger(doc, stop_words):
                 matched_value, score = results[0]
                 span = { "label": category, "value": matched_value}
                 matches.append(span)
-                
+
     # Filter overlapping spans, preferring longer and more specific categories
     filtered_matches = filter_overlapping_spans(matches)
     
