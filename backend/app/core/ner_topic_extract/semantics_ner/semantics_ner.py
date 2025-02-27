@@ -4,3 +4,5 @@
 3. return entities with highest similarity
 '''
 
+from typing import List, Dict
+

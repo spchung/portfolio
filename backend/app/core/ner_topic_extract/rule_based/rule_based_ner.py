@@ -13,11 +13,20 @@ Use list of entitiy stores in metadata.group = 'ner_entity'
 
 def get_ner_entities():
     with Session(engine) as session:
-        entities = session.exec(select(Metadata).where(Metadata.group == 'ner_entity'))
+        keys = ['SKIN_CONDITION', 'SKIN_DESCRIPTION', 'BODY_PART']  # Replace with your list of keys
+        entities = session.exec(select(Metadata).where(Metadata.group == 'ner_entity', Metadata.key.in_(keys)))
         entities = entities.scalars().all()
+
+        top_30_ingredients = session.exec(select(Metadata).where(Metadata.group == 'graph', Metadata.key == 'TOP_30_INGREDIENTS'))
+        top_30_ingredients = top_30_ingredients.scalars().all()
+        
+        all_ents = entities + top_30_ingredients
         entity_dict = {}
-        for entity in entities:
+        for entity in all_ents:
             entity_dict[entity.key] = entity.values
+
+        # rename 
+        entity_dict['PRODUCT_INGREDIENT'] = entity_dict.pop('TOP_30_INGREDIENTS')
     return entity_dict
 
 entities = get_ner_entities()

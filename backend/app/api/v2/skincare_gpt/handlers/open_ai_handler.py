@@ -10,7 +10,8 @@ from app.api.v2.skincare_gpt.classifier.multi_classifier import MultiClassifier
 from app.db.postgres import async_engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
-from qdrant_client import QdrantClient, models
+from qdrant_client import models
+from app.db.qdrant import qdarnt_client
 from app.models.pg.sephora import SephoraProduct, SephoraReview
 from app.core.ner_topic_extract.rule_based.rule_based_ner import rule_based_tag
 
@@ -29,7 +30,7 @@ class OpenAIHandler():
 
         self.client = OpenAI()
         self.model = model
-        self.qdrant_client = QdrantClient(url="http://localhost:6333")
+        self.qdrant_client = qdarnt_client
         self.llm_ctx = context_manager.get_context(self.session_id)
         self.intent_classifier = MultiClassifier(self.llm_ctx)
 
@@ -134,7 +135,8 @@ class OpenAIHandler():
         context_limit = 3
 
         # 0. get positive or negative
-        sentiment = self.binary_sentiment_analysis(query)
+        sentiment = self.sentiment_analysis(query)
+        print("Sentiment: ", sentiment)
 
         filters = []
         filters.append(("vector_column", "product_highlights"))
@@ -168,6 +170,24 @@ class OpenAIHandler():
                     SephoraProduct.product_id.in_(product_ids)).order_by(SephoraProduct.product_id))
             products = products.scalars().all()
         
+
+        reviews = []
+        # get one review for each product
+        async with AsyncSession(async_engine) as session:
+            if sentiment == "neutral":
+                for product_id in product_ids:
+                    review = await session.execute(
+                        select(SephoraReview).filter(
+                            SephoraReview.product_id == product_id).order_by(SephoraReview.helpfulness.desc()).limit(1))
+                    reviews += review.scalars().all()
+            else:
+                for product_id in product_ids:
+                    review = await session.execute(
+                        select(SephoraReview).filter(
+                            SephoraReview.product_id == product_id).where(
+                                SephoraReview.is_recommended == (sentiment == 'positive')).order_by(SephoraReview.helpfulness.desc()).limit(1))
+                    reviews += review.scalars().all()
+
         # get ingredients
         ingredients = set()
         for p in products:
@@ -175,6 +195,7 @@ class OpenAIHandler():
         
         # context operations
         self.llm_ctx.set_product_ids([p.product_id for p in  products])
+        self.llm_ctx.set_reviews([r.review_id for r in reviews])
 
         # 3. PROMPT FOR REWRITE
         response = await self.llm_rewrite(
@@ -274,9 +295,9 @@ class OpenAIHandler():
     
     def sentiment_analysis(self, query):
         prompt = f"""
-        You are a sentiment analysis model that classifies text into one of two categories: **positive** or **negative** sentiment.  
+        You are a sentiment analysis model that classifies text into one of thre categories: positive, neutral or negative sentiment.  
 
-        Analyze the sentiment of the following text and respond with only **"positive"**, **"neutral"** or **"negative"**, without any explanation.
+        Analyze the sentiment of the following text and respond with only positive, neutral or negative, without any explanation.
 
         Text:
         "{query}"
