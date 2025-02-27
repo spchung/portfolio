@@ -5,6 +5,7 @@ import spacy
 from spacy.tokens import Span
 from spacy.language import Language
 from typing import List, Dict, Tuple
+from app.core.ner_topic_extract.rule_based.fuzzy_match import fuzzy_search
 
 '''
 Use list of entitiy stores in metadata.group = 'ner_entity' 
@@ -22,13 +23,16 @@ def get_ner_entities():
 
 entities = get_ner_entities()
 
-def setup_skin_condition_tagger() -> spacy.language.Language:
+def setup_skin_condition_tagger():
+    stop_words = None
     try:
         nlp = spacy.load("en_core_web_md")
+        stop_words = nlp.Defaults.stop_words
     except OSError:
         # Fallback to smaller model if medium model not available
         try:
             nlp = spacy.load("en_core_web_sm")
+            stop_words = nlp.Defaults.stop_words
             print("Using smaller spaCy model. For better results, install en_core_web_md.")
         except OSError:
             # Provide instructions if no models are installed
@@ -38,54 +42,47 @@ def setup_skin_condition_tagger() -> spacy.language.Language:
                 "or\n"
                 "python -m spacy download en_core_web_md"
             )
+    return nlp, stop_words
+
+def skincare_gpt_tagger(doc, stop_words):
+    matches = [] # list of {label: "SKIN_CONDITION", value: "acne"}
+
+    # filter stop words
+    token_indices = [i for i, token in enumerate(doc) if not token.text in stop_words]
+
+    # Process each token in the document
+    for token_idx in token_indices:
+        token = doc[token_idx]
+
+        # Check if token or token span matches any of our custom terms
+        for category, terms in entities.items():
+            results = fuzzy_search(token.text.lower(), terms, threshold=70)
+
+            # only allow one match per token
+            if results:
+                results.sort(key=lambda x: x[1], reverse=True)
+                matched_value, score = results[0]
+                span = { "label": category, "value": matched_value}
+                matches.append(span)
+                
+    # Filter overlapping spans, preferring longer and more specific categories
+    filtered_matches = filter_overlapping_spans(matches)
     
-    @Language.component("skincare_gpt_tagger")
-    def skincare_gpt_tagger(doc):
-        matches = []
-        
-        # Process each token in the document
-        for token_idx, token in enumerate(doc):
-            # Check if token or token span matches any of our custom terms
-            for category, terms in entities.items():
-                for term in terms:
-                    term_tokens = term.lower().split()
-                    
-                    # Single token match
-                    if len(term_tokens) == 1 and token.text.lower() == term.lower():
-                        start = token_idx
-                        end = token_idx + 1
-                        span = Span(doc, start, end, label=category)
-                        matches.append(span)
-                    
-                    # Multi-token match
-                    elif len(term_tokens) > 1 and token_idx + len(term_tokens) <= len(doc):
-                        potential_match = doc[token_idx:token_idx + len(term_tokens)]
-                        if potential_match.text.lower() == term.lower():
-                            span = Span(doc, token_idx, token_idx + len(term_tokens), label=category)
-                            matches.append(span)
-        
-        # Filter overlapping spans, preferring longer and more specific categories
-        filtered_matches = filter_overlapping_spans(matches)
-        
-        # Set entities
-        doc.ents = filtered_matches
-        return doc
+    # Set entities
+    return filtered_matches
 
-    nlp.add_pipe("skincare_gpt_tagger", last=True)
-    return nlp
-
-def filter_overlapping_spans(spans: List[Span]) -> List[Span]:
+def filter_overlapping_spans(entities: List[dict]) -> List[dict]:
     """
-    Filter out overlapping spans, keeping the ones with higher priority.
+    Filter out duplicate entities, keeping the ones with higher priority.
     Priority: SKIN_CONDITION > SKIN_DESCRIPTION > BODY_PART > PRODUCT_INGREDIENT
     
     Args:
-        spans: List of spaCy Span objects
+        entities: List of dictionaries with 'label' and 'value' keys
     
     Returns:
-        Filtered list of spans with no overlaps
+        Filtered list of entities with no duplicates, prioritized by entity type
     """
-    if not spans:
+    if not entities:
         return []
     
     # Define category priorities (lower number = higher priority)
@@ -96,24 +93,22 @@ def filter_overlapping_spans(spans: List[Span]) -> List[Span]:
         "BODY_PART": 4, 
     }
     
-    # Sort spans by start index, then by length (longer first), then by priority
-    sorted_spans = sorted(
-        spans, 
-        key=lambda span: (
-            span.start, 
-            -len(span), 
-            priority.get(span.label_, 999)
-        )
+    # Create a unique set of values to handle duplicates
+    unique_values = set()
+    filtered = []
+    
+    # Sort entities by priority
+    sorted_entities = sorted(
+        entities, 
+        key=lambda entity: priority.get(entity['label'], 999)
     )
     
-    # Filter out overlapping spans
-    filtered = []
-    last_end = -1
-    
-    for span in sorted_spans:
-        if span.start >= last_end:
-            filtered.append(span)
-            last_end = span.end
+    # Keep highest priority entity for each unique value
+    for entity in sorted_entities:
+        value = entity['value'].lower()  # Case-insensitive comparison
+        if value not in unique_values:
+            filtered.append(entity)
+            unique_values.add(value)
     
     return filtered
 
@@ -129,8 +124,9 @@ def rule_based_tag(text: str) -> Tuple[spacy.tokens.Doc, Dict]:
     Returns:
         tuple: (processed spaCy Doc, dictionary of extracted entities by category)
     """
-    nlp = setup_skin_condition_tagger()
-    doc = nlp(text)
+    nlp, stopword = setup_skin_condition_tagger()
+    doc = nlp(text) # List[{label: "SKIN_CONDITION", value: "acne"}]
+    matches = skincare_gpt_tagger(doc, stopword)
     
     # Organize entities by category
     results = {
@@ -140,12 +136,7 @@ def rule_based_tag(text: str) -> Tuple[spacy.tokens.Doc, Dict]:
         "PRODUCT_INGREDIENT": []
     }
     
-    for ent in doc.ents:
-        if ent.label_ in results:
-            results[ent.label_].append({
-                "text": ent.text,
-                "start": ent.start_char,
-                "end": ent.end_char
-            })
-    
-    return doc, results
+    for match in matches:
+        results[match["label"]].append(match["value"])
+
+    return results

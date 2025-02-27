@@ -3,11 +3,10 @@ from fastapi import HTTPException
 from openai import OpenAI
 from app.db.redis import r
 import asyncio, json
-from .interface import I_EcommerceRag
-from app.api.v2.skincare_gpt.classifier.intent_enum import INTENT_ENUM
+from app.api.v2.skincare_gpt.classifier.enum import INTENT_ENUM, SKIN_TYPE_ENUM
 from app.core.preprocessing.embedding.open_ai import create_embedding_768
 from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContext, ChatHistory, SkincareGPTContextManager
-from app.api.v2.skincare_gpt.classifier.intent_classifier import IntentClassifier
+from app.api.v2.skincare_gpt.classifier.multi_classifier import MultiClassifier
 from app.db.postgres import async_engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -32,23 +31,23 @@ class OpenAIHandler():
         self.model = model
         self.qdrant_client = QdrantClient(url="http://localhost:6333")
         self.llm_ctx = context_manager.get_context(self.session_id)
-        self.intent_classifier = IntentClassifier(self.llm_ctx)
+        self.intent_classifier = MultiClassifier(self.llm_ctx)
 
     def query_vector(self, query):
         res = self.qdrant.search(query)
         return res
     
-    # main chat function
+    # Main Chat Loop
     async def chat(self, query, session_id=None):
         # 0. begin 
         self.llm_ctx.start_response()
         
         # 1. classify intent
-        intent, cls_prompt = self.intent_classifier.classify(query)
+        intent, cls_prompt = self.intent_classifier.intent(query)
         self.llm_ctx.last_prompt = cls_prompt
 
         # 2. NER
-        _, entities = rule_based_tag(query)
+        entities = rule_based_tag(query)
         self.llm_ctx.register_named_entities(entities)
 
         # start chat history
@@ -85,6 +84,30 @@ class OpenAIHandler():
 
         r.set(self.llm_ctx.session_id, self.llm_ctx.serialize())
     
+    def paraphrase(self, query):
+        prompt = f"""
+        You are a paraphrasing model that rewrites text to convey the same meaning in different words. 
+        Rewrite the following text in a different way while preserving the original meaning:
+
+        **Instructions:**
+        - Be friendly, concise, and informative.
+        - The response has to be conversational and from a skincare helper's perspective.
+
+        Text:
+        "{query}"
+
+        Response:
+        """
+        
+        response = self.client.chat.completions.create(
+            temperature=2,
+            model=self.model,
+            messages=[
+                {"role": "system", "content": prompt}
+            ]
+        )
+        return response.choices[0].message.content.strip()
+
     def create_completions(self, user_query: str, stream=False, temperature = 0.5):
         response = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -95,6 +118,7 @@ class OpenAIHandler():
         )
         return response
 
+    ## context operations
     def get_context_snapshot(self):
         try:
             json_string = r.get(self.llm_ctx.session_id)
@@ -105,7 +129,7 @@ class OpenAIHandler():
     def get_last_prompt(self):
         return r.get('last_prompt')
 
-    # INTENT - SEARCH
+    # Qdrant - SEARCH
     async def search(self, query):
         context_limit = 3
 
@@ -162,7 +186,7 @@ class OpenAIHandler():
         )
         return response
 
-    # INTENT - KNOWLEDGE
+    # Qdrant - KNOWLEDGE
     async def knowledge_search(self, query):
         context_limit = 5
 
@@ -228,6 +252,7 @@ class OpenAIHandler():
         )
         return response
     
+    ## Sentiment Analysis
     def binary_sentiment_analysis(self, query):
         prompt = f"""
         You are a sentiment analysis model that classifies text into one of two categories: **positive** or **negative** sentiment.  
@@ -265,6 +290,7 @@ class OpenAIHandler():
         )
         return response.choices[0].message.content.strip()
 
+    ## LLM Rewrite
     async def llm_rewrite(
         self, 
         intnet: INTENT_ENUM, 

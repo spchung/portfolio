@@ -46,3 +46,9 @@ def context_snapshot(session_id: str):
 def last_prompt(session_id: str):
     handler = OpenAIHandler(session_id)
     return handler.get_last_prompt()
+
+@router.post("/paraphrase")
+def paraphrase(request: ChatRequestBody):
+    handler = OpenAIHandler(request.session_id)
+    res = handler.intent_classifier.skin_type(request.message)
+    return res

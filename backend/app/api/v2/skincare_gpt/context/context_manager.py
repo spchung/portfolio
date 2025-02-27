@@ -1,13 +1,23 @@
+import json
+from uuid import uuid4
 from typing import List
-from app.models.api.context import ChatHistory, MetaData, NamedEntity
 from openai import OpenAI
 from app.db.redis import r
 from datetime import datetime as dt
-import json
-from uuid import uuid4
+from app.models.api.context import ChatHistory, MetaData, NamedEntity, UserPreferences
 
 import dotenv
 dotenv.load_dotenv()
+
+class UserPerferenceManager:
+    '''
+    Manages user preferences
+    - generate questions 
+    - collect user information
+    '''
+    def __init__(self):
+        self.attempted = False
+        self.user_preferences = UserPreferences()
 
 class RunningSummaryManager():
     def __init__(self, k: int = 3, windowSize: int = 5):
@@ -146,8 +156,8 @@ class SkincareGPTContext:
     def register_named_entities(self, entities: dict) -> None:
         lis = []
         for key, ent_lis in entities.items():
-            for data in ent_lis:
-                entity = NamedEntity(label=key, text=data.get('text', ''))
+            for value in ent_lis:
+                entity = NamedEntity(label=key, text=value)
                 lis.append(entity)
 
         # if not exists, append

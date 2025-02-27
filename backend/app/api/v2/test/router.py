@@ -21,5 +21,5 @@ def test_fuzzy(request: ChatRequestBody):
     """
     Test fuzzy search
     """
-    _, d = rule_based_tag(request.message)
+    d = rule_based_tag(request.message)
     return d
