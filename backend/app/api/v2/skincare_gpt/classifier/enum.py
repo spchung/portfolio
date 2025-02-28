@@ -5,6 +5,7 @@ class INTENT_ENUM(enum.Enum):
     SEARCH = "search"
     KNOWLEDGE = "knowledge"
     RECOMMEND = "recommend"
+    FOLLOW_UP = "follow_up"
 
 class SKIN_TYPE_ENUM(enum.Enum):
     OILY = "oily"

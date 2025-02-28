@@ -7,6 +7,8 @@ from random import randint
 from datetime import datetime as dt
 from app.models.api.context import ChatHistory, MetaData, NamedEntity, UserPreferences
 from typing import Literal
+from app.models.api.ner import EntityResults
+from app.models.pg.sephora import SephoraProduct, SephoraReview
 
 import dotenv
 dotenv.load_dotenv()
@@ -114,9 +116,13 @@ class SkincareGPTContext:
         self.last_prompt = None
         self.running_summary_manager = RunningSummaryManager(k=k_chat_size, windowSize=window_size)
         self.product_ids = [] 
+        self.products = []
         self.review_ids = []
+        self.review = []
         self.named_entities = []
         self.user_preference_manager = UserPerferenceManager()
+        self.current_intent = None
+        self.current_topic = None
     
     @staticmethod
     def load(context_json: str):
@@ -175,9 +181,9 @@ class SkincareGPTContext:
         self.metadata.last_response_tokens = token_count
 
     ## NER methods
-    def register_named_entities(self, entities: dict) -> None:
+    def register_named_entities(self, entities: EntityResults) -> None:
         lis = []
-        for key, ent_lis in entities.items():
+        for key, ent_lis in entities:
             for value in ent_lis:
                 entity = NamedEntity(label=key, text=value)
                 lis.append(entity)
@@ -191,8 +197,14 @@ class SkincareGPTContext:
     def set_product_ids(self, product_ids: List[str]) -> None:
         self.product_ids = product_ids
     
-    def set_reviews(self, review_ids: List[str]) -> None:
+    def set_products(self, products: List[SephoraProduct]) -> None:
+        self.products = products
+    
+    def set_review_ids(self, review_ids: List[str]) -> None:
         self.review_ids = review_ids
+    
+    def set_reviews(self, reviews: List[SephoraReview]) -> None:
+        self.reviews = reviews
 
     def add_chat_history(self, chat_history: ChatHistory) -> None:
         if len(self.history) >= self.window_size:
@@ -207,8 +219,8 @@ class SkincareGPTContext:
 
         context = []
         for chat in self.history[-turns:]:
-            context.append(chat.user_query)
-            context.append(chat.response)
+            context.append(f'User: {chat.user_query}')
+            context.append(f'Bot: {chat.response}')
         return "\n".join(context)
 
 class SkincareGPTContextManager:

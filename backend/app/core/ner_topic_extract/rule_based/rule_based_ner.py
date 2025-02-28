@@ -1,11 +1,8 @@
+import spacy
+from typing import List
 from app.db.postgres import Session, engine
 from sqlalchemy import select
 from app.models.pg.metedata import Metadata
-from pydantic import BaseModel
-import spacy
-from spacy.tokens import Span
-from spacy.language import Language
-from typing import List, Dict, Tuple
 from app.core.ner_topic_extract.rule_based.fuzzy_match import fuzzy_search
 from app.models.api.ner import EntityResults
 

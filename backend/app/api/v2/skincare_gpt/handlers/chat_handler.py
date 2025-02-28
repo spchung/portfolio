@@ -1,8 +1,7 @@
 import asyncio
 from app.db.redis import r
 from typing import AsyncGenerator
-from app.api.v2.skincare_gpt.classifier.enum import INTENT_ENUM, SKIN_TYPE_ENUM
-from app.core.preprocessing.embedding.open_ai import create_embedding_768
+from app.api.v2.skincare_gpt.classifier.enum import INTENT_ENUM
 from app.api.v2.skincare_gpt.context.context_manager import ChatHistory, SkincareGPTContextManager
 from app.api.v2.skincare_gpt.classifier.multi_classifier import MultiClassifier
 from app.core.ner_topic_extract.rule_based.rule_based_ner import rule_based_tag
@@ -27,21 +26,32 @@ class ChatHandler:
         self.llm_ctx = context_manager.get_context(self.session_id)
 
         self.context_manager = context_manager
-        self.llm_service = LLMService(model='chatgpt-4o-latest', classifier_model='gpt-4o-mini')
+        self.llm_service = LLMService(
+            self.llm_ctx,
+            model='chatgpt-4o-latest', 
+            classifier_model='gpt-4o-mini'
+        )
         self.ner_service = NERService()
         self.questionnaire_service = QuestionnaireService(llm_service=self.llm_service, context=self.context_manager.get_context(self.session_id))
-        self.search_service = SearchService(self.llm_service)
+        self.search_service = SearchService(self.llm_service, self.llm_ctx)
         self.sentiment_service = SentimentService(self.llm_service)
         self.multi_calssifier = MultiClassifier(self.llm_ctx)
     
     async def chat(self, query: str) -> AsyncGenerator[str, None]:
         # response start
         self.llm_ctx.start_response()
-        
-        # Classify intent
-        intent, cls_prompt = self.multi_calssifier.intent(query)
+
+        ## CONTEXT CHECK - SEE IF RAG IS NEEDED
+        rag_required = self.multi_calssifier.context_check(query) == 'NEED_NEW_INFORMATION'
+
+        if not rag_required:
+            intent = INTENT_ENUM.CHAT
+            cls_prompt = query
+        else: 
+            # Classify intent
+            intent, cls_prompt = self.multi_calssifier.intentv2(query)
         self.llm_ctx.last_prompt = cls_prompt
-        
+            
         # Extract named entities
         entities = self.ner_service.extract_entities(query)
         self.llm_ctx.register_named_entities(entities)
@@ -56,20 +66,20 @@ class ChatHandler:
             response = await self.search_service.product_search(
                 query, 
                 self.sentiment_service.analyze(query),
-                self.llm_ctx
             )
         elif intent == INTENT_ENUM.KNOWLEDGE:
             response = await self.search_service.knowledge_search(
                 query, 
                 self.sentiment_service.analyze(query),
-                self.llm_ctx
             )
         elif intent == INTENT_ENUM.RECOMMEND:
             response = await self.search_service.recommend_search(
                 query, 
                 self.sentiment_service.analyze(query),
-                self.llm_ctx
+                entities,
             )
+        elif intent == INTENT_ENUM.FOLLOW_UP:
+            response = self.llm_service.create_completions(query, stream=True, temperature=0.5)
         else:
             response = self.llm_service.create_completions(query, stream=True, temperature=0.5)
         

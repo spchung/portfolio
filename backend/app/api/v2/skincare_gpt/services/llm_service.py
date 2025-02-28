@@ -3,19 +3,43 @@ from app.db.redis import r
 from typing import List
 from app.models.pg.sephora import SephoraProduct, SephoraReview
 from app.api.v2.skincare_gpt.classifier.enum import INTENT_ENUM
+from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContext
 
 class LLMService:
-    def __init__(self, model='chatgpt-4o-latest', classifier_model='gpt-4o-mini'):
+    def __init__(
+        self,
+        llm_context: SkincareGPTContext,
+        model='chatgpt-4o-latest', 
+        classifier_model='gpt-4o-mini'
+    ):
         self.llm = OpenAI()
         self.model = model
         self.classifier_model = classifier_model
+        self.llm_context = llm_context
 
     def create_completions(self, user_query: str, stream=False, temperature = 0.5):
+        prompt = f"""
+        You are a helpful skincare assistant. You are tasked with providing informative and friendly responses to user queries.
+
+        **Instructions:**
+        - Be concise, informative, and friendly.
+        - Use provided context of previous messages to generate a helpful response.
+        - Keep the conversation engaging and informative.
+
+        Previous Messages:
+        {self.llm_context.to_llm_context()}
+        
+        User Query:
+        {user_query}
+
+        Response:
+        """
+
         response = self.llm.chat.completions.create(
             model="gpt-3.5-turbo",
             temperature=temperature,
             messages=[{"role": "system", "content": "You are a helpful skincare assistant."},
-                    {"role": "user", "content": user_query}],
+                    {"role": "user", "content": prompt}],
             stream=stream  # Enable streaming
         )
         return response
@@ -71,16 +95,15 @@ class LLMService:
         {context}  
 
         ### Instructions:
-        - **Use the retrieved product reviews to provide real-world insights** (mention common experiences, benefits, and concerns).
-        '- **Explain the role of key ingredients**, especially how they relate to the user’s query.'
-        - **Keep it concise, well-structured, and free of unnecessary repetition.**
-        - **Maintain a helpful, informative, and friendly tone.**
+        - Keep it concise, well-structured, and free of unnecessary repetition.
+        - Maintain a helpful, informative, and friendly tone.
+        - Make sure to use bullet points to list the products
 
         ### Example Response Format:
         "{llm_generated_response}"
 
         ### Output:
-        Generate a final response based on this information, ensuring it is **direct, informative, and engaging**. Do not include any formatting or extra explanations—just provide the response.
+        Make sure to use bullet points to list the products. 
         """
 
         r.set('last_prompt', prompt)

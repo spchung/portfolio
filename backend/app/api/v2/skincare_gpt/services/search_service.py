@@ -10,17 +10,18 @@ from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContext
 from app.api.v2.skincare_gpt.services.llm_service import LLMService
 from typing import Literal
 from app.models.api.ner import EntityResults
+
 class SearchService:
 
-    def __init__(self, llm_service: LLMService):
+    def __init__(self, llm_service: LLMService, llm_ctx: SkincareGPTContext):
         self.qdrant_client = qdarnt_client
         self.llm_service = llm_service
+        self.llm_ctx = llm_ctx
     
     async def product_search(
         self, 
         query: str, 
         sentiment: str, 
-        context: SkincareGPTContext
     ) -> Tuple[str, List[str]]:
         """
         Search for products based on query and sentiment.
@@ -33,7 +34,7 @@ class SearchService:
         Returns:
             stream chuncked response from llm service
         """
-        product_limit = 3
+        product_limit = 2
 
         # qdrant search filters
         filters = []
@@ -58,15 +59,15 @@ class SearchService:
         )
 
         # update context
-        context.set_product_ids([p.product_id for p in products])
-        context.set_reviews([r.review_id for r in reviews])
+        self.llm_ctx.set_product_ids([p.product_id for p in products])
+        self.llm_ctx.set_review_ids([r.review_id for r in reviews])
 
         # rewrite response
         return await self.llm_service.generate_search_response(
             query, sentiment, products, ingredients
         )
     
-    async def knowledge_search(self, query: str, sentiment: str, context: SkincareGPTContext):
+    async def knowledge_search(self, query: str, sentiment: str):
         """
         Search for knowledge based on query and sentiment.
 
@@ -102,15 +103,15 @@ class SearchService:
         )
 
         # update context
-        context.set_product_ids([p.product_id for p in products])
-        context.set_reviews([r.review_id for r in reviews])
+        self.llm_ctx.set_product_ids([p.product_id for p in products])
+        self.llm_ctx.set_review_ids([r.review_id for r in reviews])
 
         # rewrite response
         return await self.llm_service.generate_knowledge_response(
             query, sentiment, products, reviews, ingredients
         )
     
-    async def recommend_search(self, query: str, sentiment: str, ner_entities: EntityResults, context: SkincareGPTContext):
+    async def recommend_search(self, query: str, sentiment: str, ner_entities: EntityResults):
         """
         Search for knowledge based on query and sentiment.
 
@@ -157,7 +158,7 @@ class SearchService:
         qdrant_res = self.qdrant_client.query_points(
             collection_name="SkincareGPT_768",
             query=create_embedding_768(query),
-            limit=10,
+            limit=5,
             query_filter=models.Filter(
                 should=[models.FieldCondition(
                     key=k, match=models.MatchValue(value=v)) for k, v in should_filters],
@@ -172,11 +173,11 @@ class SearchService:
         result_points = points + ingredient_points
 
         # get reviews, products and ingredients
-        reviews, products, ingredients = await self._process_recommend_results(result_points, 5)
+        reviews, products, ingredients = await self._process_recommend_results(result_points, 1)
 
         # update context
-        context.set_product_ids([p.product_id for p in products])
-        context.set_reviews([r.review_id for r in reviews])
+        self.llm_ctx.set_product_ids([p.product_id for p in products])
+        self.llm_ctx.set_review_ids([r.review_id for r in reviews])
 
         # rewrite response
         return await self.llm_service.generate_recommend_response(
@@ -221,6 +222,10 @@ class SearchService:
         ingredients = set()
         for p in products:
             ingredients.update(p.ingredients)
+        
+
+        self.llm_ctx.set_products(products)
+        self.llm_ctx.set_reviews(reviews)
             
         return products, reviews, ingredients
 
@@ -252,6 +257,9 @@ class SearchService:
         ingredients = set()
         for p in products:
             ingredients.update(p.ingredients)
+        
+        self.llm_ctx.set_products(products)
+        self.llm_ctx.set_reviews(reviews)
             
         return reviews, products, ingredients
     
@@ -259,6 +267,7 @@ class SearchService:
         # Extract reviews and products
         review_ids = []
         product_ids = []
+
         for p in points[:limit]:
             review_id = p.payload.get("review_id")
             product_id = p.payload.get("product_id")
@@ -286,6 +295,8 @@ class SearchService:
         ingredients = set()
         for p in products:
             ingredients.update(p.ingredients)
+        
+        self.llm_ctx.set_products(products)
+        self.llm_ctx.set_reviews(reviews)
             
         return reviews, products, ingredients
-        
