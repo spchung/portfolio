@@ -21,6 +21,7 @@ class ChatHistory(BaseModel):
         self.timestamp = dt.now().timestamp()
 
 class UserPreferences(BaseModel):
+    all_attempted: bool = False
     skin_type: str | None = None
     concerns: List[str] | None = None
 

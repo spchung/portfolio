@@ -1,9 +1,7 @@
-from fastapi import HTTPException, APIRouter, Response
+from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
-from fastapi import Cookie
-import json
-from typing import Annotated
-from app.api.v2.skincare_gpt.handlers.open_ai_handler import OpenAIHandler, context_manager
+from app.api.v2.skincare_gpt.handlers.chat_handler import ChatHandler, context_manager
+
 '''
 Ecommerce Rag Entry Point
 '''
@@ -18,7 +16,7 @@ class ChatRequestBody(BaseModel):
 @router.post("/chat")
 async def stream(body: ChatRequestBody):
     session_id = body.session_id
-    handler = OpenAIHandler(session_id)
+    handler = ChatHandler(session_id)
     user_query = body.message
     return StreamingResponse(
         handler.chat(

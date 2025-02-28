@@ -21,7 +21,7 @@ merge(2):
 - output
 '''
 from app.api.v2.skincare_gpt.classifier.enum import INTENT_ENUM, SKIN_TYPE_ENUM
-from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContextManager
+from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContext
 
 # use running summary from context and next k rounds of conversation to produce a classification
 import dotenv
@@ -31,13 +31,13 @@ from openai import OpenAI
 class MultiClassifier:
     model = "gpt-4o-mini"
 
-    def __init__(self, llmCtxMgr: SkincareGPTContextManager):
-        self.llmCtxMgr = llmCtxMgr
+    def __init__(self, llm_context: SkincareGPTContext):
+        self.llm_context = llm_context
         self.llmClient = OpenAI()
 
     def intent(self, userQuery: str):
-        runningSummary = self.llmCtxMgr.running_summary
-        chatHistory = self.llmCtxMgr.history[-self.llmCtxMgr.k_chat_size:]
+        runningSummary = self.llm_context.running_summary
+        chatHistory = self.llm_context.history[-self.llm_context.k_chat_size:]
         kTurnUserQueries = "\n".join([f"User: {chat.user_query}" for chat in chatHistory])
         
         prompt = f"""You are an AI assistant that classifies user queries into the following intents:

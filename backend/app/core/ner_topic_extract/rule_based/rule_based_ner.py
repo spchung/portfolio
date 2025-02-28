@@ -123,7 +123,7 @@ def filter_overlapping_spans(entities: List[dict]) -> List[dict]:
     return filtered
 
 ### MAIN FUNCTION ###
-def rule_based_tag(text: str) -> Tuple[spacy.tokens.Doc, Dict]:
+def rule_based_tag(text: str) -> dict:
     """
     Tag skin conditions, descriptions, and related terms in text.
     

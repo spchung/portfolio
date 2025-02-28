@@ -1,9 +1,4 @@
-from fastapi import HTTPException, APIRouter, Response
-from fastapi.responses import StreamingResponse
-from fastapi import Cookie
-import json
-from typing import Annotated
-from app.api.v2.skincare_gpt.handlers.open_ai_handler import OpenAIHandler, context_manager
+from fastapi import APIRouter
 from app.core.ner_topic_extract.rule_based.rule_based_ner import rule_based_tag
 
 '''

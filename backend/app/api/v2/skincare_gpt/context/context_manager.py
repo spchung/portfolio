@@ -3,8 +3,10 @@ from uuid import uuid4
 from typing import List
 from openai import OpenAI
 from app.db.redis import r
+from random import randint
 from datetime import datetime as dt
 from app.models.api.context import ChatHistory, MetaData, NamedEntity, UserPreferences
+from typing import Literal
 
 import dotenv
 dotenv.load_dotenv()
@@ -15,9 +17,25 @@ class UserPerferenceManager:
     - generate questions 
     - collect user information
     '''
-    def __init__(self):
-        self.attempted = False
-        self.user_preferences = UserPreferences()
+    def __init__(self, all_attempted = False, user_preferences = UserPreferences()):
+        self.user_preferences = user_preferences
+    
+    def choose_question(self) -> Literal['concerns', 'skin_type']:
+        '''
+        choose at radom or choose un answered
+        '''
+        if self.user_preferences.all_attempted:
+            return None
+        
+        if not self.user_preferences.concerns and not self.user_preferences.skin_type:
+            return 'skin_type' if randint(0,1) == 0 else 'concerns'
+
+        if not self.user_preferences.concerns:
+            return 'concerns'
+        return 'skin_type'
+    
+    def model_dump(self):
+        return self.user_preferences.model_dump()
 
 class RunningSummaryManager():
     def __init__(self, k: int = 3, windowSize: int = 5):
@@ -98,6 +116,7 @@ class SkincareGPTContext:
         self.product_ids = [] 
         self.review_ids = []
         self.named_entities = []
+        self.user_preference_manager = UserPerferenceManager()
     
     @staticmethod
     def load(context_json: str):
@@ -113,6 +132,7 @@ class SkincareGPTContext:
         context.product_ids = context_dict['product_ids']
         context.review_ids = context_dict['review_ids']
         context.named_entities = [NamedEntity(**entity) for entity in context_dict['named_entities']]
+        context.user_preference_manager = UserPerferenceManager(context_dict['user_preference'])
         return context
     
     def model_dump(self):
@@ -126,7 +146,8 @@ class SkincareGPTContext:
             "last_prompt": self.last_prompt,
             "product_ids": self.product_ids,
             "review_ids": self.review_ids,
-            'named_entities': [entity.model_dump() for entity in self.named_entities]
+            'named_entities': [entity.model_dump() for entity in self.named_entities],
+            'user_preference': self.user_preference_manager.user_preferences.model_dump()
         }
 
     def serialize(self):
@@ -140,7 +161,8 @@ class SkincareGPTContext:
             "last_prompt": self.last_prompt,
             "product_ids": self.product_ids,
             "review_ids": self.review_ids,
-            "named_entities": [entity.model_dump() for entity in self.named_entities]
+            "named_entities": [entity.model_dump() for entity in self.named_entities],
+            'user_preference': self.user_preference_manager.user_preferences.model_dump()
         })
     
     ## metadata methods
