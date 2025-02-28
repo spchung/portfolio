@@ -40,13 +40,27 @@ def context_snapshot(session_id: str):
     context = context_manager.get_context(session_id)
     return context.model_dump()
 
-@router.get("/last-prompt")
-def last_prompt(session_id: str):
-    handler = OpenAIHandler(session_id)
-    return handler.get_last_prompt()
+@router.post("/recommend")
+def context_snapshot(body: ChatRequestBody):
+    session_id = body.session_id
+    query = body.message
+    context = context_manager.get_context(session_id)
+    handler = ChatHandler(session_id)
+    handler.recommend(query)
+    return context.recommend()
 
-@router.post("/paraphrase")
-def paraphrase(request: ChatRequestBody):
-    handler = OpenAIHandler(request.session_id)
-    res = handler.intent_classifier.skin_type(request.message)
+@router.post("/ner")
+def ner(body: ChatRequestBody):
+    session_id = body.session_id
+    query = body.message
+    handler = ChatHandler(session_id)
+    res = handler.ner_service.extract_entities(query)
     return res
+
+@router.post("/intent")
+async def recommendation(body: ChatRequestBody):
+    session_id = body.session_id
+    query = body.message
+    handler = ChatHandler(session_id)
+    intent, _ = handler.multi_calssifier.intent(query)
+    return {"intent": intent.value}

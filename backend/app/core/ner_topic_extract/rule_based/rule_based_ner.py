@@ -1,11 +1,13 @@
 from app.db.postgres import Session, engine
 from sqlalchemy import select
 from app.models.pg.metedata import Metadata
+from pydantic import BaseModel
 import spacy
 from spacy.tokens import Span
 from spacy.language import Language
 from typing import List, Dict, Tuple
 from app.core.ner_topic_extract.rule_based.fuzzy_match import fuzzy_search
+from app.models.api.ner import EntityResults
 
 '''
 Use list of entitiy stores in metadata.group = 'ner_entity' 
@@ -123,7 +125,7 @@ def filter_overlapping_spans(entities: List[dict]) -> List[dict]:
     return filtered
 
 ### MAIN FUNCTION ###
-def rule_based_tag(text: str) -> dict:
+def rule_based_tag(text: str) -> EntityResults:
     """
     Tag skin conditions, descriptions, and related terms in text.
     
@@ -149,4 +151,4 @@ def rule_based_tag(text: str) -> dict:
     for match in matches:
         results[match["label"]].append(match["value"])
 
-    return results
+    return EntityResults(**results)

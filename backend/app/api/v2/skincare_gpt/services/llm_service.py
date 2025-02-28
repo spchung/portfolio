@@ -145,3 +145,60 @@ class LLMService:
             stream=stream  # Enable streaming
         )
         return response
+    
+    async def generate_recommend_response(
+        self,
+        query: str,
+        sentiment: str,
+        products: List[SephoraProduct],
+        reviews: List[SephoraReview],
+        ingredients: List[str] = None,
+        stream=True
+    ):
+        llm_generated_response = "I recommend trying this product because it contains key ingredients that are beneficial for your skin. The reviews mention that it is suitable for sensitive skin and helps with hydration."
+
+        context = ""
+        if products:
+            for product in products:
+                context += f"Product: {product.product_name}\n"
+
+        if reviews:
+            for review in reviews:
+                context += f"Review: {review.review_text}\n"
+        
+        if ingredients :
+            formatted_ingredients = ", ".join(ingredients)
+        
+        prompt = f"""
+        You are an expert AI assistant specializing in skincare. Given a user query, your task is to generate a knowledgeable, well-structured response using the retrieved **reviews, product details, and ingredient information**.
+
+        ### Context:
+        - **User Query:** "{query}"
+        - **Sentiment:** {sentiment}
+        - **Relevant Product Reveiws:**  
+        {context}  
+
+        {f"- **Key Ingredients:** {formatted_ingredients}" if ingredients else ""}
+
+        ### Instructions:
+        - **Use the retrieved product reviews to provide real-world insights** (mention common experiences, benefits, and concerns).
+        {'- **Explain the role of key ingredients**, especially how they relate to the user’s query.' if ingredients else ''}
+        - **Keep it concise, well-structured, and free of unnecessary repetition.**
+        - **Maintain a helpful, informative, and friendly tone.**
+
+        ### Example Response Format:
+        "{llm_generated_response}"
+
+        ### Output:
+        Generate a final response based on this information, ensuring it is **direct, informative, and engaging**. Do not include any formatting or extra explanations—just provide the response.
+        """
+
+        r.set('last_prompt', prompt)
+
+        response = self.llm.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "system", "content": "Use provided information to answer the query."},
+                    {"role": "user", "content": prompt}],
+            stream=stream  # Enable streaming
+        )
+        return response

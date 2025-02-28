@@ -43,7 +43,8 @@ class MultiClassifier:
         prompt = f"""You are an AI assistant that classifies user queries into the following intents:
         1. **chat** - casual conversation unrelated to products, reviews, or skincare knowledge.
         2. **search** - searching for a product, product category, or reviews of a product.
-        3. **knowledge** - asking about skincare ingredients, routines, best practices, or product usage advice.
+        3. **knowledge** - asking about reviews, ingredients, or general skincare knowledge.
+        4. **recommend** - asking about product recommendations for specific skin types, concerns, or ingredients.
 
         Use the running summary of previous messages and recent user queries to classify the **new** user query:
 

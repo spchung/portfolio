@@ -72,7 +72,7 @@ export default function page() {
                             key="right-panel"
                             className="bg-gray-200 p-4 overflow-hidden"
                             initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: '40%', opacity: 1 }}  // 256px equals Tailwind's w-64
+                            animate={{ width: '60%', opacity: 1 }}  // 256px equals Tailwind's w-64
                             exit={{ width: 0, opacity: 0 }}
                             transition={{ duration: 0.5 }}
                         >

@@ -61,7 +61,13 @@ class ChatHandler:
         elif intent == INTENT_ENUM.KNOWLEDGE:
             response = await self.search_service.knowledge_search(
                 query, 
-                self.sentiment_service.binary_analyze(query),
+                self.sentiment_service.analyze(query),
+                self.llm_ctx
+            )
+        elif intent == INTENT_ENUM.RECOMMEND:
+            response = await self.search_service.recommend_search(
+                query, 
+                self.sentiment_service.analyze(query),
                 self.llm_ctx
             )
         else:
