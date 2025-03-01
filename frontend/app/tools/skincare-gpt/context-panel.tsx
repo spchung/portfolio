@@ -25,9 +25,9 @@ export const ContextPael = ({ context } : ContextPanelProps) => {
                     {running_summary}
                 </p>
             </LabeledContent>
-            <LabeledContent label='Vector Store Entities'> 
+            {/* <LabeledContent label='Vector Store Entities'> 
                 <EntityMetrics productIds={product_ids} reviewIds={review_ids} />
-            </LabeledContent>
+            </LabeledContent> */}
             <LabeledContent label='Intent'> 
                 <IntentMetrics intent={context.metadata?.last_query_intent} />
             </LabeledContent>
@@ -100,7 +100,7 @@ interface IntentMetricsProps {
 }
 
 const IntentMetrics = ({ intent }: IntentMetricsProps) => {
-    const intents = ['knowledge', 'chat', 'search'];
+    const intents = ['knowledge', 'chat', 'search', 'recommend', 'follow_up'];
     return (
         <div className='w-full pt-4 flex gap-1 mt-3'>
             {intents.map((i) => (

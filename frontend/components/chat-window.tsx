@@ -1,5 +1,6 @@
 import React from "react";
 import { Message } from "@/hooks/use-skincaregpt-chat";
+import ReactMarkdown from "react-markdown";
 
 interface ChatWindowProps {
   messages: Message[];
@@ -31,6 +32,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, messagesEndRef, isIni
             msg.role === "user" ? "justify-end" : "justify-start"
           }`}
         >
+          
           <div
             className={`p-3 rounded-lg w-fit ${
               msg.role === "user"
@@ -38,7 +40,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, messagesEndRef, isIni
                 : "bg-gray-200 text-gray-900 max-w-xl"
             }`}
           >
-            {msg.content}
+            <ReactMarkdown>{msg.content}</ReactMarkdown>
+            {/* {msg.content} */}
           </div>
         </div>
       ))}

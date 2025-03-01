@@ -37,7 +37,7 @@ const ChatPanel = () => {
                     <h2 className={`${monomanic.className} text-2xl font-bold text-gray-700 p-3`}>Langchain Chat </h2>
                 </div>
                 <div className="flex flex-col bg-gray-100 p-4 max-w-full w-full h-full overflow-y-auto">
-                  <ChatWindow messages={messages} messagesEndRef={messagesEndRef} />
+                  <ChatWindow messages={messages} messagesEndRef={messagesEndRef} isInitialized={true}/>
                   <ChatInput input={input} setInput={setInput} sendMessage={sendMessage} />
                 </div>
             </div>

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatPanel from './chat-panel';
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -8,8 +8,9 @@ import DevPanel from './dev-panel';
 import { useRagStore } from "@/stores/use-rag-store";
 import { Monomaniac_One } from "next/font/google";
 import { useSidebarStore } from '@/stores/use-sidebar-store';
-import { getNewSessionId } from '@/services/context-service';
+import { getNewSessionId, resetContext } from '@/services/context-service';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Button } from '@/components/ui/button';
 
 const queryClient = new QueryClient();
 
@@ -25,7 +26,7 @@ const setSessionIdLocalStorge = (sessionId: string) => {
 
 export default function page() {
     const [devPanelIsOpen, setIsOpenDevPanel] = useState(false);
-    const { toggle, state: sidebarState} = useSidebarStore();
+    const { toggle, state: sidebarState } = useSidebarStore();
     const { state, setSessionId } = useRagStore();
     const sessionId = state.sessionId;
 
@@ -41,6 +42,12 @@ export default function page() {
             });
         }
     },[]);
+
+    function reset(sessionId: string) {
+        resetContext(sessionId).then(() => {
+            window.location.reload();
+        }); 
+    }
 
     return ( 
         <QueryClientProvider client={queryClient}>
@@ -59,7 +66,10 @@ export default function page() {
                         >
                             { devPanelIsOpen ? <AiFillEyeInvisible className='text-gray-700 h-6 w-6'/> : <AiFillEye className='text-gray-700 h-6 w-6'/> }
                         </button>
-                        <h2 className={`${monomanic.className} text-2xl font-bold text-gray-700 p-3`}>SkincareGPT - {sessionId}</h2>
+                        <div className='flex justify-start gap-2'>
+                            <h2 className={`${monomanic.className} text-2xl font-bold text-gray-700 p-3`}>SkincareGPT - {sessionId} </h2>
+                            <Button className="my-auto" variant='destructive' onClick={() => reset(sessionId)}> Clear Context </Button>
+                        </div>
                     </div>
                     <div className="flex-1 bg-gray-100 p-4 max-height-[calc(100vh-48px)] overflow-y-auto">
                         <ChatPanel />
