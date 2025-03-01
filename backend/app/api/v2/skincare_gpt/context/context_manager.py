@@ -249,9 +249,9 @@ class SkincareGPTContextManager:
             self.pool[context.session_id] = context
             self.ordered_keys.append(context.session_id)
         
-    def remove_from_pool(self, context: SkincareGPTContext) -> None:
-        del self.pool[context.session_id]
-        self.ordered_keys.remove(context.session_id)
+    def remove_from_pool(self, session_id: str) -> None:
+        del self.pool[session_id]
+        self.ordered_keys.remove(session_id)
         self.count -= 1
 
     def get_context(self, session_id: str) -> SkincareGPTContext:

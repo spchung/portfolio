@@ -1,6 +1,7 @@
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
 from app.api.v2.skincare_gpt.handlers.chat_handler import ChatHandler, context_manager
+from app.api.v2.skincare_gpt.services.context_service import ContextService
 
 '''
 Ecommerce Rag Entry Point
@@ -39,6 +40,10 @@ async def new_session():
 def context_snapshot(session_id: str):
     context = context_manager.get_context(session_id)
     return context.model_dump()
+
+@router.put("/reset-context")
+def reset_context(session_id: str):
+    return ContextService().reset_context(session_id)
 
 @router.post("/recommend")
 def context_snapshot(body: ChatRequestBody):

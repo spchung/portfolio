@@ -79,7 +79,7 @@ class SearchService:
         Returns:
             stream chuncked response from llm service
         """
-        review_limit = 5
+        review_limit = 3
 
         # qdrant search filters
         filters = {"vector_column": "review_text"}

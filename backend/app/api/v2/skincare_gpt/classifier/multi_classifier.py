@@ -20,6 +20,8 @@ branch(2):
 merge(2):
 - output
 '''
+
+import textwrap
 from app.api.v2.skincare_gpt.classifier.enum import INTENT_ENUM, SKIN_TYPE_ENUM
 from app.api.v2.skincare_gpt.context.context_manager import SkincareGPTContext
 
@@ -72,7 +74,7 @@ class MultiClassifier:
     def intentv2(self, userQuery: str):
         runningSummary = self.llm_context.running_summary
         chatHistory = self.llm_context.history[-self.llm_context.k_chat_size:]
-        kTurnUserQueries = "\n".join([f"User: {chat.user_query}\nAssistant: {chat.assistant_response}" for chat in chatHistory if hasattr(chat, 'assistant_response')])
+        kTurnUserQueries = "\n".join([f"User: {chat.user_query}\nBot: {chat.assistant_response}" for chat in chatHistory if hasattr(chat, 'assistant_response')])
         previous_intent = getattr(self.llm_context, 'current_intent', None)
         previous_topic = getattr(self.llm_context, 'current_topic', None)
         
@@ -80,39 +82,18 @@ class MultiClassifier:
         1. **chat** - casual conversation unrelated to products, reviews, or skincare knowledge.
         2. **search** - searching for a product, product category, or reviews of a product.
         3. **knowledge** - asking about reviews, ingredients, or general skincare knowledge.
-        4. **recommend** - asking about product recommendations for specific skin types, concerns, or ingredients.
         
-        IMPORTANT: When determining intent, consider CONTEXT CONTINUITY. If the user is clearly continuing on the same topic as before, maintain the previous intent rather than assigning a new one.
-        
-        Previous intent: {previous_intent if previous_intent else "None"}
-        Previous topic: {previous_topic if previous_topic else "None"}
-        
-        Use the running summary of previous messages and recent user-assistant exchanges to classify the NEW user query.
-        
-        Context continuity indicators:
-        - Pronouns without clear new references (it, this, that, these, they)
-        - Short queries building on previous information
-        - Questions asking for elaboration without specifying a new topic
-        - Comparative questions (better, worse, vs, compared to) without introducing entirely new products
-        
-        Running Summary:
-        {runningSummary if runningSummary else "No running summary available"}
-        
-        Recent Conversation:
+        **Instructions:**
+        - Respond with ONLY the category name: "chat", "search", or "knowledge"
+        - Take into account the previous conversation if it is relevant to the current query.
+
+        Previous conversation:
         {kTurnUserQueries}
         
         New User Query:
         {userQuery}
-        
-        **Instructions:** 
-        1. First, determine if this query is continuing the previous conversation topic or introducing a new one.
-        2. If continuing the same topic, retain the previous intent.
-        3. If introducing a new topic, assign the appropriate new intent.
-        4. Identify the topic being discussed (e.g., "retinol products", "moisturizer recommendations", "acne treatment").
-        
-        Return your answer in this format:
-        Intent: [intent]
-        Topic: [topic]"""
+
+        """
         
         response = self.llmClient.chat.completions.create(
             temperature=0,
@@ -123,18 +104,18 @@ class MultiClassifier:
         result = response.choices[0].message.content.strip()
         
         # Parse the structured response
-        intent_line = [line for line in result.split("\n") if line.startswith("Intent:")][0]
-        topic_line = [line for line in result.split("\n") if line.startswith("Topic:")][0]
+        # intent_line = [line for line in result.split("\n") if line.startswith("Intent:")][0]
+        # topic_line = [line for line in result.split("\n") if line.startswith("Topic:")][0]
         
-        intent_value = intent_line.replace("Intent:", "").strip()
-        topic_value = topic_line.replace("Topic:", "").strip()
+        # intent_value = intent_line.replace("Intent:", "").strip()
+        # topic_value = topic_line.replace("Topic:", "").strip()
         
         # Store for future reference
-        self.llm_context.current_intent = intent_value
-        self.llm_context.current_topic = topic_value
+        # self.llm_context.current_intent = intent_value
+        # self.llm_context.current_topic = topic_value
         
         # Convert to your enum format
-        intent_enum = INTENT_ENUM(intent_value)
+        intent_enum = INTENT_ENUM(result)
         
         return intent_enum, prompt
 
@@ -180,7 +161,7 @@ class MultiClassifier:
             else:
                 previous_rag_results += f"Product: {prod.product_name}\n\n"
             
-        prompt = f"""
+        prompt = textwrap.dedent("""
         You are evaluating whether a user's query in a skincare e-commerce chat requires retrieving new product information or can be answered with existing conversation context.
 
         Previous conversation:
@@ -192,27 +173,36 @@ class MultiClassifier:
         New user query:
         "{query}"
 
-        Determine if this query requires looking up NEW product information from the database.
+        Analyze the query to determine if it can be answered using ONLY the information already available in the conversation history and previously retrieved data.
 
-        IMPORTANT: Users often phrase requests in ways that SEEM like follow-ups but actually require new information retrieval. Be generous in recommending new information retrieval.
+        Consider the following:
+        1. Is the query referencing specific products/topics already mentioned in the conversation?
+        2. Does the query use pronouns (it, this, these, they) that clearly refer to previously discussed items?
+        3. Is the query asking for clarification or additional details about information already provided?
+        4. Is the query comparing between options already presented?
+        5. Is the query a simple follow-up that builds directly on the previous exchange?
 
-        When to retrieve NEW information (default to this option):
-        - User mentions ANY new product type, category, or concern
-        - User's intent seems to be discovering products they haven't seen yet
-        - User asks about recommendations or options
-        - The query could benefit from fresh product details even if somewhat related to previous topics
-        - When in doubt, prefer retrieving new information
+        Requirements for using EXISTING context:
+        - The query must be about entities/topics already explicitly present in the conversation
+        - All information needed to provide a helpful response must be available in the context
+        - The connection to previous context must be clear and unambiguous
+        - The query is a clear follow-up that builds directly on the previous exchange
 
-        When to use EXISTING context (only in clear cases):
-        - User is clearly asking about a specific product just mentioned by name
-        - User is asking for clarification on information that was just provided
-        - User is making a direct comparison between specific products already discussed
+        Requirements for NEW information retrieval:
+        - The query asks for recommendations or information not previously discussed
+        - The query demonstrats a clear shift in topic or introduces new products
+        - The query introduces entirely new products, ingredients, or skincare concerns
+        - The query substantially shifts focus within a category (e.g., from dry skin moisturizers to acne treatments)
+        - Essential information to answer the query is missing from current context
 
-        First, identify if this appears to be a request that would benefit from product information.
-        Then provide your decision: respond with either "CONTEXT_SUFFICIENT" or "NEED_NEW_INFORMATION".
-
-        DEFAULT TO "NEED_NEW_INFORMATION" WHEN UNCERTAIN.
+        Then provide your final decision: respond with either "CONTEXT_SUFFICIENT" or "NEED_NEW_INFORMATION".
         """
+        ).format(
+            conversation_history=conversation_history,
+            previous_rag_results=previous_rag_results,
+            query=query
+        )
+        
         response = self.llmClient.chat.completions.create(
             temperature=0,
             model=self.model,
@@ -220,4 +210,7 @@ class MultiClassifier:
                     {"role": "user", "content": prompt}]
         )
         res = response.choices[0].message.content.strip()
-        return res, prompt
+        if "CONTEXT_SUFFICIENT" in res:
+            return "CONTEXT_SUFFICIENT", prompt
+        else:
+            return "NEED_NEW_INFORMATION", prompt

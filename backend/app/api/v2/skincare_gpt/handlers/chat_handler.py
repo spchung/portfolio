@@ -10,11 +10,10 @@ from app.api.v2.skincare_gpt.services.ner_service import NERService
 from app.api.v2.skincare_gpt.services.questionnaire_service import QuestionnaireService
 from app.api.v2.skincare_gpt.services.search_service import SearchService
 from app.api.v2.skincare_gpt.services.sentiment_service import SentimentService
+from app.api.v2.skincare_gpt.services.context_service import context_manager
 
 import dotenv
 dotenv.load_dotenv()
-
-context_manager = SkincareGPTContextManager()
 
 class ChatHandler:
     def __init__(self, session_id: str = None):
@@ -41,15 +40,21 @@ class ChatHandler:
         # response start
         self.llm_ctx.start_response()
 
-        ## CONTEXT CHECK - SEE IF RAG IS NEEDED
-        rag_required = self.multi_calssifier.context_check(query) == 'NEED_NEW_INFORMATION'
+        # Classify intent
+        intent, cls_prompt = self.multi_calssifier.intentv2(query)
 
-        if not rag_required:
-            intent = INTENT_ENUM.CHAT
+        # if casual, don't bother with context check
+        if intent in [INTENT_ENUM.FOLLOW_UP, INTENT_ENUM.CHAT]:
             cls_prompt = query
-        else: 
-            # Classify intent
-            intent, cls_prompt = self.multi_calssifier.intentv2(query)
+        else:
+            ## CONTEXT CHECK - SEE IF RAG IS NEEDED
+            res, _ = self.multi_calssifier.context_check(query)
+            rag_required = res == 'NEED_NEW_INFORMATION'
+
+            if not rag_required:
+                intent = INTENT_ENUM.FOLLOW_UP
+                cls_prompt = query
+            
         self.llm_ctx.last_prompt = cls_prompt
             
         # Extract named entities
